@@ -18,7 +18,7 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page):
     global scanned
     if e.path:
         try:
-            quick_file_path = "Major_Project/Screens/quickpath.txt"
+            quick_file_path = "Antivirus/Screens/quickpath.txt"
             os.makedirs(os.path.dirname(quick_file_path), exist_ok=True)
             try:
                 with open(quick_file_path, "a") as quick_file:
@@ -33,7 +33,7 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page):
 def scans(page: ft.Page):
     global scanned
     quick_list = set()
-    quick_scan_path = "Major_Project/Screens/quickpath.txt"
+    quick_scan_path = "Antivirus/Screens/quickpath.txt"
     if os.path.exists(quick_scan_path):
         with open(quick_scan_path, 'r') as file:
             quick_list = set(line.strip() for line in file)
