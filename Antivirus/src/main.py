@@ -1,15 +1,9 @@
 import flet as ft
-import time,threading,os
+import os
 from Screen.Mainpage import MainPage
-from Screen.PendriveDetection import list_connected_devices
-def device_monitor():
-    while True:
-        list_connected_devices()
-        time.sleep(1)
 def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    threading.Thread(target=device_monitor, daemon=True).start()
     if os.name == "nt":
         icon_path = os.path.abspath("icon.ico")
     else:

@@ -1,10 +1,9 @@
 import psutil
 import os
-import yara
 import notifypy
 files = set()
 flag = False  
-def list_connected_devices():
+def list_connected_devices(compiled_rule):
     global flag
     devices = []
     partitions = psutil.disk_partitions()
@@ -13,25 +12,11 @@ def list_connected_devices():
             devices.append(partition.device)
     if devices and not flag:
         flag = True
-        scan_devices(devices)
+        scan_devices(devices,compiled_rule)
         notify_results()
     elif not devices and flag:
         flag = False
-def scan_devices(devices):
-    rule = """
-        rule ExampleMalware
-        {
-            strings:
-                $ransomware_pattern = {50 53 51 52 56 57 55 41 54 41 55 41 56 41 57}
-                $keylogger_pattern = {6A 00 68 00 30 00 00 64 FF 35 30 00 00 00}
-                $suspicious_cmd = "cmd.exe /c"
-                $powershell_script = "powershell.exe -nop -w hidden"
-                $shellcode_pattern = {31 C0 50 68 2E 65 78 65 68 63 61 6C 63 54 5F 50 57 56 50 FF D0}
-            condition:
-                any of ($ransomware_pattern, $keylogger_pattern, $suspicious_cmd, $powershell_script, $shellcode_pattern)
-        }
-    """
-    compiled_rule = yara.compile(source=rule)
+def scan_devices(devices,compiled_rule):
     for device in devices:
         try:
             with os.scandir(device) as entries:

@@ -3,8 +3,8 @@ from Screen.Protectionview import ProtectionView
 from Screen.Settingsview import SettingsView
 from Screen.Scanview import ScanView
 from Screen.Homeview import HomeView
-import yara
-import psutil,threading,os
+import yara,psutil,threading,os,time
+from Screen.PendriveDetection import list_connected_devices
 from concurrent.futures import ThreadPoolExecutor
 file_lock = threading.Lock()  
 count=0
@@ -61,6 +61,11 @@ def MainPage(page: ft.Page):
     }
     """
     compiled_rule = yara.compile(source=rule)
+    def device_monitor():
+        while True:
+            list_connected_devices(compiled_rule)
+            time.sleep(1)
+    threading.Thread(target=device_monitor, daemon=True).start()
     get_drives(page)
     quick_scan_path = "src/Screen/quickpath.txt"
     if os.path.exists(quick_scan_path):
