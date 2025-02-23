@@ -8,7 +8,7 @@ def get_selected_files(selected_files):
     return [file for file, selected in selected_files.items() if selected]
 def on_add_to_exclusion_list(e, selected_files, malware_count, page, bs):
     selected = set(get_selected_files(selected_files))
-    exclusion_file_path = "storage/data/exclusion.txt"
+    exclusion_file_path = "src/Screen/exclusion.txt"
     os.makedirs(os.path.dirname(exclusion_file_path), exist_ok=True)
     try:
         with open(exclusion_file_path, "a") as exclude_file:
@@ -41,8 +41,8 @@ def on_select_all_change(e, malware_file_checkboxes, selected_files, page):
 def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count):
     batch_size = 100 if compiled_rule is None else 10 if count < 100 else 100 if count < 500 else 200 if count < 1000 else 1000
     exclusion_list = set()
-    if os.path.exists("storage/data/exclusion.txt"):
-        with open("storage/data/exclusion.txt", 'r') as file:
+    if os.path.exists("src/Screen/exclusion.txt"):
+        with open("src/Screen/exclusion.txt", 'r') as file:
             exclusion_list = set(line.strip() for line in file)
     while not file_queue.empty():
         try:

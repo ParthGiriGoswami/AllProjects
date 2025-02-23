@@ -62,7 +62,7 @@ def MainPage(page: ft.Page):
     """
     compiled_rule = yara.compile(source=rule)
     get_drives(page)
-    quick_scan_path = "storage/data/quickpath.txt"
+    quick_scan_path = "src/Screen/quickpath.txt"
     if os.path.exists(quick_scan_path):
         with open(quick_scan_path, 'r') as file:
             scanned = {line.strip() for line in file}
