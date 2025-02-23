@@ -46,9 +46,9 @@ def scan_devices(devices):
             pass
 def notify_results():
     if os.name == "nt":  
-        icon_path = os.path.abspath("Major_Project/icon.ico")
+        icon_path = os.path.abspath("icon.ico")
     else:
-        icon_path = os.path.abspath("Major_Project/icon.png")
+        icon_path = os.path.abspath("icon.png")
     if not os.path.exists(icon_path):
         icon_path = None
     if len(files) == 0:
