@@ -1,14 +1,19 @@
 import flet as ft
-import os
-import threading
 from queue import Queue
+import queue,concurrent.futures,threading,os
+from datetime import datetime
+from Screen.HeuristicScan import analyze_file  # Ensure analyze_file is imported correctly
+exclusion_list = set()
+if os.path.exists("storage/data/exclusion.txt"):
+    with open("storage/data/exclusion.txt", "r") as file:
+        exclusion_list = set(line.strip() for line in file)
 def on_checkbox_change(e, selected_files):
     selected_files[e.control.label] = e.control.value
 def get_selected_files(selected_files):
     return [file for file, selected in selected_files.items() if selected]
 def on_add_to_exclusion_list(e, selected_files, malware_count, page, bs):
     selected = set(get_selected_files(selected_files))
-    exclusion_file_path = "src/Screen/exclusion.txt"
+    exclusion_file_path = "storage/data/exclusion.txt"
     os.makedirs(os.path.dirname(exclusion_file_path), exist_ok=True)
     try:
         with open(exclusion_file_path, "a") as exclude_file:
@@ -38,32 +43,44 @@ def on_select_all_change(e, malware_file_checkboxes, selected_files, page):
     select_all_value = e.control.value
     update_checkboxes(select_all_value, malware_file_checkboxes, selected_files)
     page.update()
-def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count):
-    batch_size = 100 if compiled_rule is None else 10 if count < 100 else 100 if count < 500 else 200 if count < 1000 else 1000
-    exclusion_list = set()
-    if os.path.exists("src/Screen/exclusion.txt"):
-        with open("src/Screen/exclusion.txt", 'r') as file:
-            exclusion_list = set(line.strip() for line in file)
-    while not file_queue.empty():
-        try:
-            file = file_queue.get_nowait()
-            with lock:
-                processed_count[0] += 1
-                index = processed_count[0]
-            if compiled_rule and compiled_rule.match(file) and file not in exclusion_list:
+def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count,flag):
+    batch_size = 50 if compiled_rule is None else 50 if count < 100 else 100 if count < 500 else 2000 if not flag else 200
+    with concurrent.futures.ThreadPoolExecutor(max_workers=batch_size) as executor:
+        future_to_file = {}
+        while not file_queue.empty():
+            try:
+                file_path = file_queue.get_nowait()
+                if file_path in exclusion_list:
+                    file_queue.task_done()
+                    continue
                 with lock:
-                    malware_count.add(file)
-            if index % batch_size == 0 or index == count:
-                with lock:
-                    progress = max(progress_ring.value, index / count)
-                    progress_ring.value = progress
-                    txt.value = f"Scanning: {file}"
-                    info.value = f"{round(progress * 100, 2)}% scanned"
-                    page.update()
-        except:
-            pass
-        finally:
-            file_queue.task_done()
+                    processed_count[0] += 1
+                    index = processed_count[0]
+                is_suspicious=False
+                if not flag:
+                    is_suspicious = compiled_rule.match(file_path) if compiled_rule else False
+                else:
+                    if not is_suspicious:
+                        future = executor.submit(analyze_file, file_path)
+                        future_to_file[future] = file_path
+                        try:
+                            is_suspicious = future.result()
+                        except Exception:
+                            pass
+                if is_suspicious:
+                    malware_count.add(file_path)
+                if index % batch_size == 0 or index == count:
+                    with lock:
+                        progress = max(progress_ring.value, index / count)
+                        progress_ring.value = progress
+                        txt.value = f"Scanning: {file_path}"
+                        info.value = f"{round(progress * 100, 2)}% scanned"
+                        page.update()
+                file_queue.task_done()
+            except queue.Empty:
+                break  
+            except:
+                pass  
 def malwarelist(page, malware_count, selected_files, bs):
     malware_found = len(malware_count)
     def close_bs(e):
@@ -146,23 +163,25 @@ def malwarelist(page, malware_count, selected_files, bs):
         )
     bs.content=cont
     page.update()
-def scan_drives(page:ft.Page, txt, info, count, files, progress_ring, malware_count, compiled_rule,bs):
+def scan_drives(page:ft.Page, txt, info, count, files, progress_ring, malware_count, compiled_rule,bs,flag):
     file_queue = Queue()
     for file in files:
         file_queue.put(file)
-    num_threads = 100 if compiled_rule is None else 10 if count < 100 else 100 if count < 500 else 200 if count < 1000 else 1000
+    num_threads = 4000 if flag else 1 if compiled_rule is None else 10 if count < 100 else 20 if count < 500 else 2000
     threads = []
     processed_count = [0]  
     lock = threading.Lock()
+    a=datetime.now()
     for _ in range(num_threads):
         thread = threading.Thread(
             target=worker, 
-            args=(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count)
+            args=(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count,flag)
         )
         threads.append(thread)
         thread.start()
     for thread in threads:
         thread.join()
+    print(datetime.now()-a)
     progress_ring.value = 1  
     info.value = "100.00% scanned"
     page.update()
