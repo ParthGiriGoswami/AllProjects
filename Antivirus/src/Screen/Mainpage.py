@@ -8,7 +8,8 @@ from Screen.PendriveDetection import list_connected_devices
 from concurrent.futures import ThreadPoolExecutor
 file_lock = threading.Lock()  
 count=0
-files=set()
+deepfiles=set()
+quickfiles = set()
 def scan_directory(directory, file_set):
     try:
         with os.scandir(directory) as entries:
@@ -20,7 +21,7 @@ def scan_directory(directory, file_set):
     except (PermissionError, FileNotFoundError):
         pass
 def get_drives(page):
-    global count,files
+    global count,deepfiles
     if count == 0:
         partitions = psutil.disk_partitions()
         drive_letters = [partition.device for partition in partitions if partition.fstype]
@@ -38,13 +39,14 @@ def get_drives(page):
             local_files = set()
             scan_directory(drive, local_files)
             with file_lock:
-                files.update(local_files)
+                deepfiles.update(local_files)
             return len(local_files)
-        max_workers = 1000
+        max_workers = min(len(drive_letters), os.cpu_count())
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             list(executor.map(scan_drive, drive_letters))
         count=1
 def MainPage(page: ft.Page):
+    global quickfiles
     rule = """
     rule ExampleMalware
     {
@@ -65,11 +67,17 @@ def MainPage(page: ft.Page):
             time.sleep(1)
     threading.Thread(target=device_monitor, daemon=True).start()
     get_drives(page)
+    quick_scan_path = "storage/data/quickpath.txt"
+    if os.path.exists(quick_scan_path):
+        with open(quick_scan_path, 'r') as file:
+            scanned = {line.strip() for line in file}
+        for file in scanned:
+            scan_directory(file,quickfiles)
     def change_page(index):
         if index == 0:
-            new_view= HomeView(page,compiled_rule,files)
+            new_view= HomeView(page,compiled_rule,quickfiles)
         elif index==1:
-            new_view=ScanView(page,compiled_rule,files)
+            new_view=ScanView(page,compiled_rule,quickfiles,deepfiles)
         elif index==2:
             new_view=ProtectionView(page)
         else:
@@ -86,7 +94,7 @@ def MainPage(page: ft.Page):
         adaptive=True,
         on_change=lambda e: change_page(e.control.selected_index)
     )
-    content_container = ft.Container(content=HomeView(page,compiled_rule,files), expand=True, adaptive=True)
+    content_container = ft.Container(content=HomeView(page,compiled_rule,quickfiles), expand=True, adaptive=True)
     return ft.View(
         route="/home",
         controls=[ft.Row(

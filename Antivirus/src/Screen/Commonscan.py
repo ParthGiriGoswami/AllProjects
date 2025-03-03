@@ -56,10 +56,8 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
                 with lock:
                     processed_count[0] += 1
                     index = processed_count[0]
-                is_suspicious=False
-                if not flag:
-                    is_suspicious = compiled_rule.match(file_path) if compiled_rule else False
-                else:
+                is_suspicious = compiled_rule.match(file_path) if compiled_rule else False
+                if flag:
                     if not is_suspicious:
                         future = executor.submit(analyze_file, file_path)
                         future_to_file[future] = file_path
@@ -167,7 +165,7 @@ def scan_drives(page:ft.Page, txt, info, count, files, progress_ring, malware_co
     file_queue = Queue()
     for file in files:
         file_queue.put(file)
-    num_threads = 4000 if flag else 1 if compiled_rule is None else 10 if count < 100 else 20 if count < 500 else 2000
+    num_threads =  50 if compiled_rule is None else 50 if count < 100 else 100 if count < 500 else 2000 if not flag else 4000
     threads = []
     processed_count = [0]  
     lock = threading.Lock()
