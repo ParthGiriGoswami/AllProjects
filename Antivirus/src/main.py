@@ -11,7 +11,7 @@ def main(page: ft.Page):
     if not os.path.exists(icon_path):
         icon_path = None
     page.window.icon = icon_path
-    page.title = "Antivirus"
+    page.title = "Kepler Antivirus"
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     def route_change(route):
