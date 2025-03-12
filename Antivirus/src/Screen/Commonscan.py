@@ -1,8 +1,7 @@
 import flet as ft
 from queue import Queue
 import queue,concurrent.futures,threading,os
-from datetime import datetime
-from Screen.HeuristicScan import analyze_file  # Ensure analyze_file is imported correctly
+from Screen.HeuristicScan import analyze_file  
 exclusion_list = set()
 if os.path.exists("storage/data/exclusion.txt"):
     with open("storage/data/exclusion.txt", "r") as file:
@@ -127,7 +126,6 @@ def malwarelist(page, malware_count, selected_files, bs):
         if current_page > 0:
             current_page -= 1
             update_list_view()
-
     def update_pagination_buttons():
         prev_button.disabled = (current_page == 0)
         next_button.disabled = ((current_page + 1) * ITEMS_PER_PAGE >= malware_found)
@@ -166,7 +164,7 @@ def malwarelist(page, malware_count, selected_files, bs):
                         value=False,
                         on_change=on_select_all_change
                     ),
-                    malware_file_checkboxes,  # Lazy-loaded ListView
+                    malware_file_checkboxes,  
                     ft.Row(
                         [prev_button, page_label, next_button],
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -202,7 +200,6 @@ def scan_drives(page:ft.Page, txt, info, count, files, progress_ring, malware_co
     threads = []
     processed_count = [0]  
     lock = threading.Lock()
-    a=datetime.now()
     for _ in range(num_threads):
         thread = threading.Thread(
             target=worker, 
@@ -212,7 +209,6 @@ def scan_drives(page:ft.Page, txt, info, count, files, progress_ring, malware_co
         thread.start()
     for thread in threads:
         thread.join()
-    print(datetime.now()-a)
     progress_ring.value = 1  
     info.value = "100.00% scanned"
     page.update()
