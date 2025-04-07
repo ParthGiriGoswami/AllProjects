@@ -29,9 +29,7 @@ def analyze_pe_file(file_path):
         pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_SECURITY']])
         entropy = calculate_entropy(file_data)
         suspicious_sections = sum(1 for s in pe.sections if calculate_entropy(s.get_data()) > 7.0)
-        score = (2 if entropy > 7.5 else 0) + \
-                (3 if suspicious_sections > 2 else 0) + \
-                (2 if pe.OPTIONAL_HEADER.AddressOfEntryPoint < 0x1000 else 0)
+        score = (2 if entropy > 7.5 else 0)+(3 if suspicious_sections > 2 else 0) +(2 if pe.OPTIONAL_HEADER.AddressOfEntryPoint < 0x1000 else 0)
         return score >= 4
     except pefile.PEFormatError:
         return False

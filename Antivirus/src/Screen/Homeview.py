@@ -46,8 +46,5 @@ def HomeView(page: ft.Page,rule,quickfiles):
                 ft.Row([ft.Text(value="Perform a scan", size=20)], alignment=ft.MainAxisAlignment.CENTER),
                 ft.Row([btn1], alignment=ft.MainAxisAlignment.CENTER)
             ],
-            spacing=10,
-            expand=True,
-            alignment=ft.MainAxisAlignment.CENTER
-        ),
-    )
+            spacing=10,expand=True,alignment=ft.MainAxisAlignment.CENTER
+        ),)

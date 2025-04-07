@@ -76,32 +76,12 @@ def MainPage(page: ft.Page):
         content_container.content = new_view
         page.update()
     navigation_rail = ft.NavigationRail(
-        selected_index=0,
-        bgcolor=ft.Colors.BLUE_GREY_900,
-        destinations=[
-            ft.NavigationRailDestination(
-                icon=ft.Icon(ft.Icons.HOME_OUTLINED, size=90),  
-                selected_icon=ft.Icon(ft.Icons.HOME, size=90),
-                label_content=ft.Text("Home", size=20)
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icon(ft.Icons.SEARCH, size=90),
-                selected_icon=ft.Icon(ft.Icons.SEARCH, size=90),
-                label_content=ft.Text("Scan", size=20)
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icon(ft.Icons.SHIELD_OUTLINED, size=90),
-                selected_icon=ft.Icon(ft.Icons.SHIELD, size=90),
-                label_content=ft.Text("Protection", size=20)
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icon(ft.Icons.SETTINGS_OUTLINED, size=90),
-                selected_icon=ft.Icon(ft.Icons.SETTINGS, size=90),
-                label_content=ft.Text("Settings", size=20)
-            ),
-        ],
-        expand=True,
-        on_change=lambda e: change_page(e.control.selected_index)
+        selected_index=0,bgcolor=ft.Colors.BLUE_GREY_900,
+        destinations=[ft.NavigationRailDestination(icon=ft.Icon(ft.Icons.HOME_OUTLINED, size=90),selected_icon=ft.Icon(ft.Icons.HOME, size=90),label_content=ft.Text("Home", size=20)),
+            ft.NavigationRailDestination(icon=ft.Icon(ft.Icons.SEARCH, size=90),selected_icon=ft.Icon(ft.Icons.SEARCH, size=90),label_content=ft.Text("Scan", size=20)),
+            ft.NavigationRailDestination(icon=ft.Icon(ft.Icons.SHIELD_OUTLINED, size=90),selected_icon=ft.Icon(ft.Icons.SHIELD, size=90),label_content=ft.Text("Protection", size=20)),
+            ft.NavigationRailDestination(icon=ft.Icon(ft.Icons.SETTINGS_OUTLINED, size=90),selected_icon=ft.Icon(ft.Icons.SETTINGS, size=90),label_content=ft.Text("Settings", size=20)),],
+        expand=True,on_change=lambda e: change_page(e.control.selected_index)
     )
     return ft.View(
         route="/home",
@@ -109,8 +89,6 @@ def MainPage(page: ft.Page):
             ft.Row([
                 ft.Container(navigation_rail, expand=False, width=120),  
                 content_container  
-            ], expand=True)
-        ],
-        spacing=0,
-        padding=0
+            ], expand=True)],
+        spacing=0,padding=0
     )
