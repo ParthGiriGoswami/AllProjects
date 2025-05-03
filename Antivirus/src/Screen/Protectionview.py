@@ -14,8 +14,10 @@ def ProtectionView(page: ft.Page):
         adaptive=True,
         content=ft.Column(
             [
+                ft.Text(value="Protection", size=20),
                 create_custom_button(page,"File Encrypt","Encrypts a file",icon=ft.Icons.LOCK,h=100,on_click=lambda _: file_encrypt.pick_files(allow_multiple=False)),
                 create_custom_button(page,"Temporary File Removal","Removes files that are stored in device",icon=ft.Icons.INSERT_DRIVE_FILE_SHARP,h=100,on_click=lambda _: temp_file_removal(page)),
+                create_custom_button(page,"Password Manager","Manages passwords on this device",icon=ft.Icons.MANAGE_ACCOUNTS_ROUNDED,h=100),
             ],
             spacing=20,
         ),

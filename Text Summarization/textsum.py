@@ -6,7 +6,7 @@ import pyperclip
 import firebase_admin
 from firebase_admin import credentials,db
 if not firebase_admin._apps:
-    cred = credentials.Certificate('file.json')  
+    cred = credentials.Certificate('cred.json')  
     firebase_admin.initialize_app(cred, {'databaseURL': "https://projectname.firebaseio.com/"})
 users_ref = db.reference('data')
 try:

@@ -31,7 +31,15 @@ def on_remove_files(e, selected_files, malware_count, page, bs):
             os.remove(file)
             malware_count.discard(file)
             del selected_files[file]
-        except:
+        except (PermissionError,KeyError):
+            exclusion_file_path = "storage/data/exclusion.txt"
+            os.makedirs(os.path.dirname(exclusion_file_path), exist_ok=True)
+            with open(exclusion_file_path, "a") as exclude_file:
+                for file in selected:
+                    exclude_file.write(f"{file}\n")
+                    malware_count.discard(file)
+                    del selected_files[file]
+        except Exception:
             pass
     malwarelist(page, malware_count, selected_files, bs)
 def update_checkboxes(select_all_value, malware_file_checkboxes, selected_files):
