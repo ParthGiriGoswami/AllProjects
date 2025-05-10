@@ -2,6 +2,26 @@ import flet as ft
 from Screen.Createbutton import create_custom_button
 from Screen.FileDecryption import file_decryption
 import os
+import subprocess
+def folder_unlocker(e: ft.FilePickerResultEvent, page: ft.Page):
+    def handle_close(e):
+        page.close(dia)
+    if e.path:
+        command = f'icacls "{e.path}" /remove:d everyone'
+        subprocess.run(command, shell=True, check=True)
+        dia=ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Info"),
+            content=ft.Text(f"{e.path} unlocked successfully"),
+            actions=[
+                ft.TextButton("Ok", on_click=handle_close),
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            on_dismiss=lambda e: page.add(
+                ft.Text("Modal dialog dismissed"),
+            ),
+        )
+        page.open(dia)
 def file_decryptor(e: ft.FilePickerResultEvent, page: ft.Page):
     def handle_close(e):
         page.close(dia)
@@ -72,14 +92,18 @@ def SettingsView(page: ft.Page):
     page.overlay.append(file_picker_for_quick_scan)
     file_decrypt = ft.FilePicker(on_result=lambda e: file_decryptor(e, page))
     page.overlay.append(file_decrypt)
+    unlock_folder = ft.FilePicker(on_result=lambda e: folder_unlocker(e, page))
+    page.overlay.append(unlock_folder)
     return ft.Container(
         expand=True,
         padding=10,
         adaptive=True,
         content=ft.Column(
             [
+                ft.Text(value="Settings", size=20),
                 create_custom_button(page,"Add Files","Adds files to quickscan",icon=ft.Icons.ADD_BOX,h=100,on_click=lambda _: file_picker_for_quick_scan.get_directory_path()),
-                create_custom_button(page,"File Decryption","Decrypt a file",icon=ft.Icons.LOCK_OPEN,h=100,on_click=lambda _:  file_decrypt.pick_files(allow_multiple=False)),  
+                create_custom_button(page,"File Decryption","Decrypt a file",icon=ft.Icons.LOCK_OPEN,h=100,on_click=lambda _:  file_decrypt.pick_files(allow_multiple=False)), 
+                create_custom_button(page,"Unlock Folder","Unlocks any locked folder in the device",icon=ft.Icons.MANAGE_ACCOUNTS_ROUNDED,h=100,on_click=lambda _:unlock_folder.get_directory_path())
             ],
             spacing=20,
         ),
