@@ -12,8 +12,7 @@ def scan_directory(directory, file_set):
                     scan_directory(entry.path, file_set)
     except (PermissionError, FileNotFoundError):
         pass
-def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles):
-    global scanned
+def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath):
     if e.path:
         try:
             quick_file_path = "storage/data/quickpath.txt"
@@ -21,17 +20,18 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,r
             try:
                 with open(quick_file_path, "a") as quick_file:
                     quick_file.write(f"{e.path}\n")
+                    quickpath.add(e.path)
                     scanned.add(e.path)
                 for file in scanned:
-                    scan_directory(file,quickfiles,False)
+                    scan_directory(file,quickfiles)
             except:
                 pass
         except:
             pass
         if scanned:
             Scan(page,quickfiles,rule,False)
-def HomeView(page: ft.Page,rule,quickfiles):
-    file_picker_for_quick_scan = ft.FilePicker(on_result=lambda e: on_folder_picked_for_quick_scan(e, page,rule,quickfiles))
+def HomeView(page: ft.Page,rule,quickfiles,quickpath):
+    file_picker_for_quick_scan = ft.FilePicker(on_result=lambda e: on_folder_picked_for_quick_scan(e, page,rule,quickfiles,quickpath))
     page.overlay.append(file_picker_for_quick_scan)
     btn1 = ft.ElevatedButton(
         "Quick scan",
