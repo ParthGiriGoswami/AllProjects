@@ -38,11 +38,11 @@ def ProtectionView(page: ft.Page):
         content=ft.Column(
             [
                 ft.Text(value="Protection", size=20),
-                create_custom_button(page,"File Encryption","Encrypts a file",icon=ft.Icons.LOCK,h=100,on_click=lambda _: file_encrypt.pick_files(allow_multiple=False)),
-                create_custom_button(page,"Temporary File Removal","Removes files that are stored in device",icon=ft.Icons.INSERT_DRIVE_FILE_SHARP,h=100,on_click=lambda _: temp_file_removal(page)),
-                create_custom_button(page,"Password Manager","Manages passwords on this device",icon=ft.Icons.MANAGE_ACCOUNTS_ROUNDED,h=100,on_click=lambda _: passwordmanager(page)),
-                create_custom_button(page,"Lock Folder","Locks any folder in the device",icon=ft.Icons.MANAGE_ACCOUNTS_ROUNDED,h=100,on_click=lambda _:lock_folder.get_directory_path()),
+                create_custom_button(page,"File Encryption","Encrypts a file",icon=ft.Icons.LOCK,on_click=lambda _: file_encrypt.pick_files(allow_multiple=False)),
+                create_custom_button(page,"Temporary File Removal","Removes files that are stored in device",icon=ft.Icons.INSERT_DRIVE_FILE_SHARP,on_click=lambda _: temp_file_removal(page)),  
+                create_custom_button(page,"Password Manager","Manages passwords on this device",icon=ft.Icons.MANAGE_ACCOUNTS_ROUNDED,on_click=lambda _: passwordmanager(page)),
+                create_custom_button(page,"Lock Folder","Locks any folder in the device",icon=ft.Icons.FOLDER_OFF,on_click=lambda _:lock_folder.get_directory_path()),    
             ],
-            spacing=20,
+            spacing=21,
         ),
     )
