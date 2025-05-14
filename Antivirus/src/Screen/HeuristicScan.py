@@ -1,14 +1,8 @@
-import os
 import pefile
 import math
 import magic
 import re
 from collections import Counter
-exclusion_list = set()
-exclusion_file = "src/Screen/exclusion.txt"
-if os.path.exists(exclusion_file):
-    with open(exclusion_file, 'r') as file:
-        exclusion_list = set(line.strip() for line in file)
 suspicious_patterns = [re.compile(p) for p in [
     rb"eval\(", rb"exec\(", rb"base64\.b64decode", rb"os\.system\(",
     rb"subprocess\.Popen\(", rb"powershell", rb"cmd\.exe",
