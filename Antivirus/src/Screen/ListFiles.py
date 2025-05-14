@@ -2,8 +2,11 @@ import flet as ft
 import os
 def listfiles(page, idp, path, file=None):
     selected_files = {}
+    BATCH_SIZE = 100
+    loaded_count = 0
+    all_files = sorted(path)
     def close_bs(e):
-        bs.open = False
+        bs.open=False
         page.update()
     def update_remove_button_state():
         remove.disabled = not any(selected_files.values())
@@ -23,12 +26,30 @@ def listfiles(page, idp, path, file=None):
             pass
         return file_set
     def refresh_checkbox_list():
+        nonlocal loaded_count
         cont.content.controls[:] = []
         selected_files.clear()
-        for f in sorted(path):
-            selected_files[f] = False
-            cont.content.controls.append(ft.Checkbox(label=f, value=False, on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)))
+        loaded_count = 0
+        load_next_batch()
         page.update()
+    def load_next_batch():
+        nonlocal loaded_count
+        next_batch = all_files[loaded_count:loaded_count + BATCH_SIZE]
+        for f in next_batch:
+            selected_files[f] = False
+            cont.content.controls.append(
+                ft.Checkbox(
+                    label=f,
+                    value=False,
+                    on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)
+                )
+            )
+        loaded_count += len(next_batch)
+        page.update()
+    def on_scroll(e: ft.OnScrollEvent):
+        if e.pixels >= e.max_scroll_extent - 100:
+            if loaded_count < len(all_files):
+                load_next_batch()
     def remove_selected_files(e):
         nonlocal path, cont, file
         to_remove = {f for f, selected in selected_files.items() if selected}
@@ -47,16 +68,17 @@ def listfiles(page, idp, path, file=None):
         remove.disabled = True
         page.update()
     def add_file_result(e: ft.FilePickerResultEvent):
-        nonlocal path
+        nonlocal path, all_files
         if e.files:
             for f in e.files:
                 path.add(f.path)
         with open("storage/data/exclusion.txt", "w") as f:
             for line in path:
                 f.write(f"{line}\n")
+        all_files = sorted(path)
         refresh_checkbox_list()
     def add_folder_result(e: ft.FilePickerResultEvent):
-        nonlocal path, file
+        nonlocal path, file, all_files
         if e.path:
             path.add(e.path)
             with open("storage/data/quickpath.txt", "w") as f:
@@ -67,6 +89,7 @@ def listfiles(page, idp, path, file=None):
                 file_set = scan_directory(dir_path, file_set)
             file.clear()
             file.update(file_set)
+            all_files = sorted(path)
             refresh_checkbox_list()
     file_picker = ft.FilePicker(on_result=add_file_result)
     folder_picker = ft.FilePicker(on_result=add_folder_result)
@@ -77,14 +100,9 @@ def listfiles(page, idp, path, file=None):
             file_picker.pick_files(allow_multiple=True)
         else:
             folder_picker.get_directory_path()
-    checkbox_controls = []
-    if path is not None:
-        for f in path:
-            selected_files[f] = False
-            checkbox_controls.append(ft.Checkbox(label=f, value=False, on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)))
     cont = ft.Container(
         width=page.width,height=500,
-        content=ft.ListView(controls=checkbox_controls, spacing=10, padding=10, auto_scroll=False)
+        content=ft.ListView(controls=[],spacing=10,padding=10,auto_scroll=False,on_scroll=on_scroll)
     )
     remove = ft.TextButton(f"Remove From {idp}", disabled=True, on_click=remove_selected_files)
     bs = ft.AlertDialog(
@@ -98,5 +116,6 @@ def listfiles(page, idp, path, file=None):
         actions=[remove, ft.TextButton("Add", on_click=add)],
         actions_alignment=ft.CrossAxisAlignment.END,
     )
+    refresh_checkbox_list()
     page.open(bs)
     page.update()
