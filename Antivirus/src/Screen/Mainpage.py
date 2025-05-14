@@ -8,6 +8,7 @@ from Screen.PendriveDetection import list_connected_devices
 from concurrent.futures import ThreadPoolExecutor
 file_lock = threading.Lock()  
 count = 0
+quickpath=set()
 deepfiles = set()
 quickfiles = set()
 def scan_directory(directory, file_set):
@@ -62,17 +63,18 @@ def MainPage(page: ft.Page):
         with open(quick_scan_path, 'r') as file:
             scanned = {line.strip() for line in file}
         for file in scanned:
+            quickpath.add(file)
             scan_directory(file, quickfiles)
-    content_container = ft.Container(content=HomeView(page, compiled_rule, quickfiles), expand=True)
+    content_container = ft.Container(content=HomeView(page, compiled_rule, quickfiles,quickpath), expand=True)
     def change_page(index):
         if index == 0:
-            new_view = HomeView(page, compiled_rule, quickfiles)
+            new_view = HomeView(page,compiled_rule,quickfiles,quickpath)
         elif index == 1:
-            new_view = ScanView(page, compiled_rule, quickfiles, deepfiles)
+            new_view = ScanView(page,compiled_rule,quickfiles,quickpath,deepfiles)
         elif index == 2:
             new_view = ProtectionView(page)
         else:
-            new_view = SettingsView(page)
+            new_view = SettingsView(page,quickpath,quickfiles)
         content_container.content = new_view
         page.update()
     navigation_rail = ft.NavigationRail(
