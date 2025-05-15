@@ -1,5 +1,6 @@
 import psutil
 import os
+from winotify import Notification, audio
 import notifypy
 files = set()
 flag = False  
@@ -37,18 +38,14 @@ def notify_results():
     if not os.path.exists(icon_path):
         icon_path = None
     if len(files) == 0:
-        notification = notifypy.Notify() 
-        notification.application_name = "Kepler Antivirus"
-        notification.title = "Information"
-        notification.message ="No malware found!"
-        notification.urgency = "critical"
-        notification.icon = icon_path
+        notification=notifypy.Notify(application_name = "Kepler Antivirus",title = "Information",message ="No malware found!",urgency ="critical",icon = icon_path)
         notification.send(block=False)
     else:
-        notification = notifypy.Notify() 
-        notification.application_name = "Kepler Antivirus"
-        notification.title = "Information"
-        notification.message =f"{len(files)} malware files found!",
-        notification.urgency = "critical"
-        notification.icon = icon_path
-        notification.send(block=False)
+        if (os.name=="nt"):
+            toast=Notification(app_id="Kepler Antivirus", title="Message  title",msg="Hello World",duration="short",icon="D:/icon.ico")
+            toast.set_audio(audio.Default, loop=False)
+            toast.add_actions(label="Remove",launch="https://google.com")
+            toast.show()
+        else:
+            notifypy.Notify(application_name = "Kepler Antivirus",title = "Information",message =f"{len(files)} malware files found!",urgency = "critical",icon = icon_path)
+            notification.send(block=False)
