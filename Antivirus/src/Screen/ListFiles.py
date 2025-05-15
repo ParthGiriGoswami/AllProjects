@@ -34,6 +34,7 @@ def listfiles(page, idp, path, file=None):
         total_files[0] = len(all_files[0])
         start_idx = current_page[0] * ITEMS_PER_PAGE
         end_idx = min(start_idx + ITEMS_PER_PAGE, total_files[0])
+    
         file_list.controls.clear()
         for f in all_files[0][start_idx:end_idx]:
             file_list.controls.append(
@@ -43,9 +44,15 @@ def listfiles(page, idp, path, file=None):
                     on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)
                 )
             )
+        # Update select_all_button label
+        if total_files[0] > 100:
+            any_unchecked = any(not selected_files_dict.get(f, False) for f in all_files[0][start_idx:end_idx])
+            select_all_button.text = "Select All" if any_unchecked else "Deselect All"
+    
         page_label.value = f"Page {current_page[0] + 1}/{(total_files[0] - 1) // ITEMS_PER_PAGE + 1 if total_files[0] else 1}"
         update_pagination_buttons()
         page.update()
+
     def next_page(e=None):
         if (current_page[0] + 1) * ITEMS_PER_PAGE < total_files[0]:
             current_page[0] += 1
@@ -121,7 +128,16 @@ def listfiles(page, idp, path, file=None):
         for f in all_files[0][start_idx:end_idx]:
             selected_files_dict[f] = not all_checked
         select_all_button.text = "Deselect All" if not all_checked else "Select All"
-        refresh_checkbox_list()
+        file_list.controls.clear()
+        for f in all_files[0][start_idx:end_idx]:
+            file_list.controls.append(
+                ft.Checkbox(
+                    label=f,
+                    value=selected_files_dict.get(f, False),
+                    on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)
+                )
+            )
+        page.update()
     file_picker = ft.FilePicker(on_result=add_file_result)
     folder_picker = ft.FilePicker(on_result=add_folder_result)
     page.overlay.append(file_picker)
@@ -137,6 +153,7 @@ def listfiles(page, idp, path, file=None):
     prev_button.on_click = prev_page
     next_button.on_click = next_page
     remove.on_click = remove_selected_files
+    select_all_button.on_click = toggle_select_all
     content_column = ft.Column([
         file_list,
         ft.Row([prev_button, page_label, next_button], alignment=ft.MainAxisAlignment.CENTER)
