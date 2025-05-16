@@ -52,11 +52,11 @@ def MainPage(page: ft.Page):
     }
     """
     compiled_rule = yara.compile(source=rule)
-    def device_monitor():
+    def device_monitor(page):
         while True:
-            list_connected_devices(compiled_rule)
+            list_connected_devices(page,compiled_rule)
             time.sleep(1)
-    threading.Thread(target=device_monitor, daemon=True).start()
+    threading.Thread(target=device_monitor,args=(page,) ,daemon=True).start()
     get_drives()
     quick_scan_path = "storage/data/quickpath.txt"
     if os.path.exists(quick_scan_path):
