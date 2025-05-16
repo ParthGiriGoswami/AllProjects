@@ -20,11 +20,6 @@ def main(page: ft.Page):
             view=MainPage(page)
             page.views.append(view)
         page.update()
-    def view_pop(view):
-        page.views.pop()
-        top_view = page.views[-1]
-        page.go(top_view.route)
     page.on_route_change = route_change
-    page.on_view_pop = view_pop
     page.go("/home")
 ft.app(target=main)
