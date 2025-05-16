@@ -25,7 +25,7 @@ def listfiles(page, idp, path, file=None):
                 for entry in entries:
                     if entry.is_file():
                         file_set.add(entry.path)
-                    elif entry.is_dir(follow_symlinks=False):
+                    elif  entry.is_dir(follow_symlinks=False):
                         scan_directory(entry.path, file_set)
         except (PermissionError, FileNotFoundError):
             pass
@@ -34,7 +34,6 @@ def listfiles(page, idp, path, file=None):
         total_files[0] = len(all_files[0])
         start_idx = current_page[0] * ITEMS_PER_PAGE
         end_idx = min(start_idx + ITEMS_PER_PAGE, total_files[0])
-    
         file_list.controls.clear()
         for f in all_files[0][start_idx:end_idx]:
             file_list.controls.append(
@@ -44,15 +43,12 @@ def listfiles(page, idp, path, file=None):
                     on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)
                 )
             )
-        # Update select_all_button label
         if total_files[0] > 100:
             any_unchecked = any(not selected_files_dict.get(f, False) for f in all_files[0][start_idx:end_idx])
             select_all_button.text = "Select All" if any_unchecked else "Deselect All"
-    
         page_label.value = f"Page {current_page[0] + 1}/{(total_files[0] - 1) // ITEMS_PER_PAGE + 1 if total_files[0] else 1}"
         update_pagination_buttons()
-        page.update()
-
+        page.update() 
     def next_page(e=None):
         if (current_page[0] + 1) * ITEMS_PER_PAGE < total_files[0]:
             current_page[0] += 1
@@ -129,6 +125,7 @@ def listfiles(page, idp, path, file=None):
             selected_files_dict[f] = not all_checked
         select_all_button.text = "Deselect All" if not all_checked else "Select All"
         file_list.controls.clear()
+        
         for f in all_files[0][start_idx:end_idx]:
             file_list.controls.append(
                 ft.Checkbox(
@@ -137,6 +134,7 @@ def listfiles(page, idp, path, file=None):
                     on_change=lambda e, file_path=f: on_checkbox_change(e, file_path)
                 )
             )
+        update_remove_button_state()
         page.update()
     file_picker = ft.FilePicker(on_result=add_file_result)
     folder_picker = ft.FilePicker(on_result=add_folder_result)
@@ -158,11 +156,7 @@ def listfiles(page, idp, path, file=None):
         file_list,
         ft.Row([prev_button, page_label, next_button], alignment=ft.MainAxisAlignment.CENTER)
     ])
-    cont = ft.Container(
-        width=page.width,
-        height=500,
-        content=content_column
-    )
+    cont = ft.Container(width=page.width,height=500,content=content_column)
     bs = ft.AlertDialog(
         modal=True,
         title=ft.Row([
