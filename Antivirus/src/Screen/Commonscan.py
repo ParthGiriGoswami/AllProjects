@@ -3,9 +3,6 @@ from queue import Queue
 import queue, concurrent.futures, threading, os
 from Screen.HeuristicScan import analyze_file
 exclusion_list = set()
-if os.path.exists("storage/data/exclusion.txt"):
-    with open("storage/data/exclusion.txt", "r") as file:
-        exclusion_list = set(line.strip() for line in file)
 def on_checkbox_change(e, selected_files):
     selected_files[e.control.label] = e.control.value
 def get_selected_files(selected_files):
@@ -22,8 +19,8 @@ def on_add_to_exclusion_list(e, selected_files, malware_count, page, bs):
         pass
     for file in selected:
         malware_count.discard(file)
-        del selected_files[file]
-    malwarelist(page, malware_count, selected_files, bs)
+    new_selected_files = {file: False for file in malware_count}
+    malwarelist(page, malware_count, new_selected_files, bs)
 def on_remove_files(e, selected_files, malware_count, page, bs):
     selected = get_selected_files(selected_files)
     for file in selected:
@@ -52,7 +49,7 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
         while not file_queue.empty():
             try:
                 file_path = file_queue.get_nowait()
-                if file_path in exclusion_list or file_path.endswith(os.path.join("src", "Screen", "Mainpage.py")):
+                if file_path in exclusion_list:
                     file_queue.task_done()
                     continue
                 with lock:
@@ -82,153 +79,127 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
                 pass
 ITEMS_PER_PAGE = 500
 def malwarelist(page, malware_count, selected_files, bs):
-    ITEMS_PER_PAGE = 1000
+    malware_found = len(malware_count)
+    current_page = 0
     malware_list = list(malware_count)
-    total_pages = max((len(malware_list) - 1) // ITEMS_PER_PAGE + 1, 1)
-    current_page = [0]
-    selected_files_dict = {f: False for f in malware_list}
-    text=ft.Text(f"{len(malware_list)} files found", size=18)
-    malware_file_checkboxes = ft.ListView(height=160, auto_scroll=False)
-    page_label = ft.Text()
-    prev_button = ft.ElevatedButton("Previous", disabled=True)
-    next_button = ft.ElevatedButton("Next", disabled=len(malware_list) <= ITEMS_PER_PAGE)
-
-    select_all_checkbox = ft.Checkbox(
-        label="Select All", value=False, visible=len(malware_list) > 100
-    )
+    selected_files_dict = {file: False for file in malware_list}
+    malware_file_checkboxes = ft.ListView(controls=[], height=150, auto_scroll=False)
+    select_all_checkbox = ft.Checkbox(label="Select All",value=False,on_change=lambda e: on_select_all_change,visible=False)
+    addbtn = ft.TextButton(text="Add to exclusion list",on_click=lambda e: on_add_to_exclusion_list(e, selected_files_dict, malware_count, page, bs),disabled=True)
+    removebtn = ft.TextButton(text="Remove",on_click=lambda e: on_remove_files(e, selected_files_dict, malware_count, page, bs),disabled=True)
+    page_label = ft.Text(f"Page {current_page + 1}/{(malware_found // ITEMS_PER_PAGE) + 1}")
+    prev_button = ft.ElevatedButton("Previous", on_click=lambda e: prev_page(), disabled=True)
+    next_button = ft.ElevatedButton("Next", on_click=lambda e: next_page(), disabled=(ITEMS_PER_PAGE >= malware_found))
     pagination_row = ft.Row(
         [prev_button, page_label, next_button],
         alignment=ft.MainAxisAlignment.CENTER,
-        visible=len(malware_list) > ITEMS_PER_PAGE
+        visible=(malware_found > 500)  
     )
-    addbtn = ft.TextButton("Add to exclusion list", disabled=True)
-    removebtn = ft.TextButton("Remove", disabled=True)
-    def update_page_label():
-        page_label.value = f"Page {current_page[0] + 1}/{total_pages}"
-    def get_selected():
-        return {f for f, selected in selected_files_dict.items() if selected}
     def update_action_buttons():
         has_selection = any(selected_files_dict.values())
         addbtn.disabled = not has_selection
         removebtn.disabled = not has_selection
         page.update()
-    def on_checkbox_change(e, file):
-        selected_files_dict[file] = e.control.value
-        update_select_all_checkbox()
-        update_action_buttons()
-    def update_select_all_checkbox():
-        start = current_page[0] * ITEMS_PER_PAGE
-        end = min(start + ITEMS_PER_PAGE, len(malware_list))
-        visible_items = malware_list[start:end]
-        all_checked = all(selected_files_dict.get(f, False) for f in visible_items)
-        select_all_checkbox.value = all_checked
-        page.update()
-    def toggle_select_all(e):
-        value = e.control.value
-        start = current_page[0] * ITEMS_PER_PAGE
-        end = min(start + ITEMS_PER_PAGE, len(malware_list))
-        for f in malware_list[start:end]:
-            selected_files_dict[f] = value
-        update_checkbox_list()
-        update_action_buttons()
-    def update_nav_buttons():
-        prev_button.disabled = current_page[0] == 0
-        next_button.disabled = current_page[0] + 1 >= total_pages
-    def update_checkbox_list():
-        start = current_page[0] * ITEMS_PER_PAGE
-        end = min(start + ITEMS_PER_PAGE, len(malware_list))
-        malware_file_checkboxes.controls.clear()
-        for file in malware_list[start:end]:
-            malware_file_checkboxes.controls.append(
-                ft.Checkbox(
-                    label=file,
-                    value=selected_files_dict.get(file, False),
-                    on_change=lambda e, f=file: on_checkbox_change(e, f)
-                )
-            )
-        select_all_checkbox.visible = len(malware_list) > 100
-        pagination_row.visible = len(malware_list) > ITEMS_PER_PAGE
-        update_page_label()
-        update_nav_buttons()
-        update_select_all_checkbox()
-        update_action_buttons()
-        page.update()
-    def next_page(e=None):
-        if (current_page[0] + 1) < total_pages:
-            current_page[0] += 1
-            update_checkbox_list()
-    def prev_page(e=None):
-        if current_page[0] > 0:
-            current_page[0] -= 1
-            update_checkbox_list()
-    def add_to_exclusion(e):
-        selected = get_selected()
-        path = "storage/data/exclusion.txt"
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "a") as f:
-            for line in selected:
-                f.write(f"{line}\n")
-        malware_count.difference_update(selected)
-        for f in selected:
-            selected_files_dict.pop(f, None)
-        malware_list.clear()
-        malware_list.extend(malware_count)
-        update_checkbox_list()
-        text.value=f"{len(malware_list)} files found"
-        page.update()
-    def remove_files(e):
-        selected = get_selected()
-        for file in selected:
-            try:
-                os.remove(file)
-            except (PermissionError, FileNotFoundError):
-                with open("storage/data/exclusion.txt", "a") as f:
-                    f.write(f"{file}\n")
-            malware_count.discard(file)
-            selected_files_dict.pop(file, None)
-        malware_list.clear()
-        malware_list.extend(malware_count)
-        update_checkbox_list()
-        text.value=f"{len(malware_list)} files found"
-        page.update()
     def close_bs(e):
         page.close(bs)
         page.update()
-    prev_button.on_click = prev_page
-    next_button.on_click = next_page
-    select_all_checkbox.on_change = toggle_select_all
-    addbtn.on_click = add_to_exclusion
-    removebtn.on_click = remove_files
-    if not malware_list:
+    def update_list_view():
+        nonlocal malware_file_checkboxes, page_label
+        start_idx = current_page * ITEMS_PER_PAGE
+        end_idx = min(start_idx + ITEMS_PER_PAGE, malware_found)
+        malware_file_checkboxes.controls = [
+            ft.Checkbox(
+                label=file,
+                value=selected_files_dict[file],
+                on_change=lambda e, f=file: on_checkbox_change(e, f)
+            ) for file in malware_list[start_idx:end_idx]
+        ]
+        page_label.value = f"Page {current_page + 1}/{(malware_found // ITEMS_PER_PAGE) + 1}"
+        select_all_checkbox.visible = malware_found > 100
+        select_all_checkbox.value = False
+        pagination_row.visible = (malware_found > 500)
+        update_pagination_buttons()
+        page.update()
+    def on_checkbox_change(e, file):
+        selected_files_dict[file] = e.control.value
+        update_action_buttons()
+    def on_select_all_change(e):
+        select_all = e.control.value
+        for key in selected_files_dict.keys():
+            selected_files_dict[key] = select_all
+        update_list_view()
+        update_action_buttons()
+    def next_page():
+        nonlocal current_page
+        if (current_page + 1) * ITEMS_PER_PAGE < malware_found:
+            current_page += 1
+            update_list_view()
+    def prev_page():
+        nonlocal current_page
+        if current_page > 0:
+            current_page -= 1
+            update_list_view()
+    def update_pagination_buttons():
+        prev_button.disabled = (current_page == 0)
+        next_button.disabled = ((current_page + 1) * ITEMS_PER_PAGE >= malware_found)
+        page.update()
+    diatitle = ft.Row([
+        ft.Text("Info", size=20, weight=ft.FontWeight.BOLD),
+        ft.Container(expand=True),
+        ft.IconButton(icon=ft.Icons.CLOSE, tooltip="Close", on_click=close_bs),
+    ])
+    if malware_found == 0:
         icon = ft.Icon(ft.Icons.CHECK, color=ft.Colors.GREEN_400, size=150)
-        content = ft.Column([
-            icon,
-            ft.Text("Scan Completed", size=20),
-            ft.Text("No malware found.")
-        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-        bs.content = ft.Container(content=content, width=page.width, expand=True, alignment=ft.alignment.center)
-        bs.actions = []
+        cont = ft.Container(
+            width=page.width,
+            expand=True,
+            padding=50,
+            content=ft.Column(
+                [
+                    icon,
+                    ft.Text(value="Scan Completed", size=20),
+                    ft.Text(value="No malware found"),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
+            ),
+            alignment=ft.alignment.center,
+        )
+        bs.actions = []  
     else:
         icon = ft.Icon(ft.Icons.CLOSE, color=ft.Colors.RED, size=150)
-        content = ft.Column([
-            icon,
-            ft.Text("Scan Completed", size=20),
-            text,
-            select_all_checkbox,
-            malware_file_checkboxes,
-            pagination_row
-        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-        bs.content = ft.Container(content=content, width=page.width, expand=True, alignment=ft.alignment.center)
+        files = f"{malware_found} files found"
+        cont = ft.Container(
+            width=page.width,
+            expand=True,
+            content=ft.Column(
+                [
+                    icon,
+                    ft.Text(value="Scan Completed", size=20),
+                    ft.Text(value=files, size=20),
+                    select_all_checkbox,
+                    malware_file_checkboxes,
+                    pagination_row,
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
+            ),
+            alignment=ft.alignment.center,
+        )
         bs.actions = [addbtn, removebtn]
-    bs.title = ft.Row([
-        ft.Text("Scan Results", size=20, weight=ft.FontWeight.BOLD),
-        ft.Container(expand=True),
-        ft.IconButton(icon=ft.Icons.CLOSE, on_click=close_bs)
-    ])
-    update_checkbox_list()
-    page.open(bs)
+    bs.content = cont
+    bs.title = diatitle
     page.update()
+    update_list_view()
 def scan_drives(page: ft.Page, txt, info, count, files, progress_ring, malware_count, compiled_rule, bs, flag):
+    global exclusion_list
+    if os.path.exists("storage/data/exclusion.txt"):
+        with open("storage/data/exclusion.txt", "r") as file:
+            exclusion_list = set(line.strip() for line in file)
+    else:
+        exclusion_list = set()
     file_queue = Queue()
     for file in files:
         file_queue.put(file)

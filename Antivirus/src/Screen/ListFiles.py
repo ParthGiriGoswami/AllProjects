@@ -1,6 +1,6 @@
 import flet as ft
 import os
-def listfiles(page, idp, path, file=None):
+def listfiles(page, idp, path=None, file=None):
     ITEMS_PER_PAGE = 500
     current_page = [0]
     all_files = [sorted(path)]
