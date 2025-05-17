@@ -2,6 +2,7 @@ import flet as ft
 import os
 from Screen.Mainpage import MainPage
 def main(page: ft.Page):
+    page.theme_mode = ft.ThemeMode.DARK
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     if os.name == "nt":
