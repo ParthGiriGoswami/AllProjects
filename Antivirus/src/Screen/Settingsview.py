@@ -49,7 +49,7 @@ def SettingsView(page: ft.Page,quickpath,quickfile):
     page.overlay.append(file_decrypt)
     unlock_folder = ft.FilePicker(on_result=lambda e: folder_unlocker(e, page))
     page.overlay.append(unlock_folder)
-    exclusionpath=None
+    exclusionpath=set()
     if os.path.exists("storage/data/exclusion.txt"):
         with open("storage/data/exclusion.txt", "r") as file:
             exclusionpath=set(line.strip() for line in file)
