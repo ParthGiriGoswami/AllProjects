@@ -38,9 +38,10 @@ def Scan(page: ft.Page, scanned, rule, flag):
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         ),
+        adaptive=True,
         alignment=ft.alignment.center,
     )
-    bs = ft.AlertDialog(modal=True, content=cont)
+    bs = ft.AlertDialog(modal=True,title=ft.Text("Scanning"),content=cont,actions=None)
     page.open(bs)
     page.update()
     threading.Thread(
