@@ -1,5 +1,5 @@
 import flet as ft
-import os
+import os,sys
 from Screen.Mainpage import MainPage
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
@@ -15,10 +15,13 @@ def main(page: ft.Page):
     )
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    def resource_path(relative_path):
+        base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+        return os.path.join(base_path, relative_path)
     if os.name == "nt":
-        icon_path = os.path.abspath("icon.ico")
+        icon_path = resource_path("src/assets/icon.ico")
     else:
-        icon_path = os.path.abspath("icon.png")
+        icon_path = resource_path("src/assets/icon.png")
     if not os.path.exists(icon_path):
         icon_path = None
     page.window.icon = icon_path

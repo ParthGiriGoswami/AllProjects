@@ -1,6 +1,6 @@
 import psutil
 import flet as ft
-import os
+import os, sys
 import notifypy
 files = set()
 flag = False
@@ -21,10 +21,13 @@ def list_connected_devices(page, compiled_rule):
         except:
             pass
     def notify_results(page):
+        def resource_path(relative_path):
+            base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+            return os.path.join(base_path, relative_path)
         if os.name == "nt":
-            icon_path = os.path.abspath("icon.ico")
+            icon_path = resource_path("src/assets/icon.ico")
         else:
-            icon_path = os.path.abspath("icon.png")
+            icon_path = resource_path("src/assets/icon.png")
         if not os.path.exists(icon_path):
             icon_path = None
         if len(files) == 0:

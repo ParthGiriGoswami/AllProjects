@@ -49,7 +49,7 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
         while not file_queue.empty():
             try:
                 file_path = file_queue.get_nowait()
-                if file_path in exclusion_list:
+                if file_path in exclusion_list or file_path.endswith(os.path.join("src", "Screen", "Mainpage.py")):
                     file_queue.task_done()
                     continue
                 with lock:
