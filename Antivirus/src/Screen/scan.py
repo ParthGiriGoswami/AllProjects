@@ -41,7 +41,7 @@ def Scan(page: ft.Page, scanned, rule, flag):
         adaptive=True,
         alignment=ft.alignment.center,
     )
-    bs = ft.AlertDialog(modal=True,title=ft.Text("Scanning"),content=cont,actions=None)
+    bs = ft.AlertDialog(modal=True,title=ft.Text("Scanning",size=20, weight=ft.FontWeight.BOLD),content=cont,actions=None)
     page.open(bs)
     page.update()
     threading.Thread(
