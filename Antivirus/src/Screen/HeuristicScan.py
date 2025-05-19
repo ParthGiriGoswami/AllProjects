@@ -1,7 +1,4 @@
-import pefile
-import math
-import magic
-import re
+import pefile,math,magic,re
 from collections import Counter
 suspicious_patterns = [re.compile(p) for p in [
     rb"eval\(", rb"exec\(", rb"base64\.b64decode", rb"os\.system\(",

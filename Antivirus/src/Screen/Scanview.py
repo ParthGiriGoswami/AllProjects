@@ -1,5 +1,4 @@
-import flet as ft
-import os
+import flet as ft, os
 from Screen.scan import Scan
 from Screen.Createbutton import create_custom_button
 scanned=set()

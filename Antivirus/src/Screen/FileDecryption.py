@@ -1,6 +1,5 @@
 from cryptography.fernet import Fernet
-import os
-import flet as ft
+import os,flet as ft
 def load_key(key_file):
     with open(key_file, "rb") as file:
         key = file.read()

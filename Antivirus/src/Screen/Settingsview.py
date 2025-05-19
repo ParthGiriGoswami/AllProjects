@@ -1,19 +1,31 @@
-import flet as ft
+import flet as ft,subprocess,platform, os, stat
 from Screen.Createbutton import create_custom_button
 from Screen.FileDecryption import file_decryption
 from Screen.ListFiles import listfiles
-import os
-import subprocess
 def folder_unlocker(e: ft.FilePickerResultEvent, page: ft.Page):
     def handle_close(e):
         page.close(dia)
     if e.path:
-        command = f'icacls "{e.path}" /remove:d everyone'
-        subprocess.run(command, shell=True, check=True)
+        system = platform.system()
+        if system == "Windows":
+            command = f'icacls "{e.path}" /remove:d everyone'
+            try:
+                subprocess.run(command, shell=True, check=True)
+                cont=ft.Text(f"{e.path} unlocked successfully")
+            except:
+                pass
+        elif system in ("Linux", "Darwin"):  
+            try:
+                os.chmod(e.path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                cont=ft.Text(f"{e.path} unlocked successfully")
+            except:
+                pass
+        else:
+            cont=ft.Text("Can't lock the folder")
         dia=ft.AlertDialog(
+            content=cont,
             modal=True,
             title=ft.Text("Info"),
-            content=ft.Text(f"{e.path} unlocked successfully"),
             actions=[
                 ft.TextButton("Ok", on_click=handle_close),
             ],

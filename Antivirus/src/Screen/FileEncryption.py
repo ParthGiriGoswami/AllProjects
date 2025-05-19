@@ -1,6 +1,5 @@
 from cryptography.fernet import Fernet
-import os
-import flet as ft
+import os,flet as ft
 def generate_key(file_name):
     key_file = f"{file_name}.key"
     key = Fernet.generate_key()

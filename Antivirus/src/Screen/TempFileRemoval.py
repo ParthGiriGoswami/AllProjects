@@ -1,6 +1,4 @@
-import flet as ft
-import os
-import tempfile
+import flet as ft,os,tempfile
 def temp_file_removal(page: ft.Page):
     def handle_close(e):
         page.close(dia)

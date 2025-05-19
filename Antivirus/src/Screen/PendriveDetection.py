@@ -1,11 +1,9 @@
-import psutil
-import flet as ft
-import os, sys
-import notifypy
+import psutil, flet as ft, os, sys,notifypy
 files = set()
 flag = False
+malware_snackbar = None
 def list_connected_devices(page, compiled_rule):
-    global flag
+    global flag, malware_snackbar
     devices = []
     partitions = psutil.disk_partitions()
     def scan_devices(path, compiled_rule):
@@ -21,6 +19,7 @@ def list_connected_devices(page, compiled_rule):
         except:
             pass
     def notify_results(page):
+        global malware_snackbar
         def resource_path(relative_path):
             base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
             return os.path.join(base_path, relative_path)
@@ -124,5 +123,6 @@ def list_connected_devices(page, compiled_rule):
         notify_results(page)
     elif not devices and flag:
         flag = False
-        page.overlay.clear()
-        page.update()
+        if malware_snackbar in page.overlay:
+            page.overlay.remove(malware_snackbar)
+            page.update() 

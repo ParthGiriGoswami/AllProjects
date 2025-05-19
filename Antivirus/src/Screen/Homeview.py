@@ -1,6 +1,5 @@
-import flet as ft
+import flet as ft, os
 from Screen.scan import Scan
-import os
 scanned=set()
 def scan_directory(directory, file_set):
     try:

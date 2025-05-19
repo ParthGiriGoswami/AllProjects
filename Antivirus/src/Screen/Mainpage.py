@@ -1,9 +1,8 @@
-import flet as ft
+import flet as ft,yara, psutil, threading, os, time
 from Screen.Protectionview import ProtectionView
 from Screen.Settingsview import SettingsView
 from Screen.Scanview import ScanView
 from Screen.Homeview import HomeView
-import yara, psutil, threading, os, time
 from Screen.PendriveDetection import list_connected_devices
 from concurrent.futures import ThreadPoolExecutor
 file_lock = threading.Lock()  
