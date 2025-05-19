@@ -1,4 +1,4 @@
-import flet as ft,subprocess, platform, os, stat
+import flet as ft,subprocess,platform,os,stat
 from Screen.Createbutton import create_custom_button
 from Screen.TempFileRemoval import temp_file_removal
 from Screen.FileEncryption import file_encryption

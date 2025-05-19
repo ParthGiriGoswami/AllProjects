@@ -1,4 +1,4 @@
-import flet as ft, threading, math
+import flet as ft,threading,math
 from Screen.Commonscan import scan_drives
 malware_count = set()
 def Scan(page: ft.Page, scanned, rule, flag):

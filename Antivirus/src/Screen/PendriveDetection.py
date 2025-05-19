@@ -1,4 +1,4 @@
-import psutil, flet as ft, os, sys,notifypy
+import psutil,flet as ft,os,sys,notifypy
 files = set()
 flag = False
 malware_snackbar = None

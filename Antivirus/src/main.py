@@ -1,5 +1,4 @@
-import flet as ft
-import os,sys
+import flet as ft,os,sys
 from Screen.Mainpage import MainPage
 def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK

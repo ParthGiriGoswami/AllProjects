@@ -1,4 +1,4 @@
-import flet as ft,yara, psutil, threading, os, time
+import flet as ft,yara,psutil,threading,os,time
 from Screen.Protectionview import ProtectionView
 from Screen.Settingsview import SettingsView
 from Screen.Scanview import ScanView
