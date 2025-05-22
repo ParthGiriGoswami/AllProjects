@@ -38,7 +38,6 @@ def listfiles(page, idp, path=None, file=None):
         if total_files[0] > 100:
             any_unchecked = any(not selected_files_dict.get(f, False) for f in all_files[0][start:end])
             select_all_button.text = "Select All" if any_unchecked else "Deselect All"
-
         page_label.value = f"Page {current_page[0]+1}/{(total_files[0] - 1)//ITEMS_PER_PAGE + 1 if total_files[0] else 1}"
         update_pagination_buttons()
         page.update()
