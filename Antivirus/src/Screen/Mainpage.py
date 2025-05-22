@@ -7,18 +7,18 @@ from Screen.Notifier import list_connected_devices, DownloadHandler
 from Screen.ScanDir import scan_directory
 from watchdog.observers import Observer
 from concurrent.futures import ThreadPoolExecutor
+from Screen.Helper import lock_folder,unlock_folder
 file_lock = threading.Lock()
 quickpath = set()
 deepfiles = set()
 quickfiles = set()
-SAFE_PATHS = [os.path.abspath(p) for p in ["C:/Windows", "C:/Program Files", "C:/Program Files (x86)"]]
+SAFE_PATHS = [os.path.abspath(p).replace("\\", "/") for p in ["C:/Windows", "C:/Program Files", "C:/Program Files (x86)", os.getcwd().replace("\\", "/")]]
 def is_in_safe_path(file_path):
     file_path = os.path.abspath(file_path)
     return any(file_path.startswith(safe) for safe in SAFE_PATHS)
 def get_drives(file):
     partitions = psutil.disk_partitions()
     drive_letters = [p.device for p in partitions if p.fstype]
-
     def scan_drive(drive):
         local_files = scan_directory(drive, set())
         with file_lock:
@@ -29,7 +29,6 @@ def get_drives(file):
         list(executor.map(scan_drive, drive_letters))
 def MainPage(page: ft.Page):
     global quickfiles
-
     yara_rule = """
     rule ExampleMalware {
         strings:
@@ -149,13 +148,15 @@ def MainPage(page: ft.Page):
         global quickfiles
         quickfiles.clear()
         get_drives(deepfiles)
-        quick_scan_path = "storage/data/quickpath.txt"
+        quick_scan_path = "files/quickpath.txt"
+        unlock_folder()
         if os.path.exists(quick_scan_path):
             with open(quick_scan_path, 'r') as file:
                 for line in file:
                     path = line.strip()
                     quickpath.add(path)
                     scan_directory(path, quickfiles)
+        lock_folder()
         update_ui_after_scan()
     threading.Thread(target=init_scans, daemon=True).start()
     page.run_task(animate_image)

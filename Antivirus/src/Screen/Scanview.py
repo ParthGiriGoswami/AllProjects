@@ -2,11 +2,13 @@ import flet as ft,os
 from Screen.scan import Scan
 from Screen.Createbutton import create_custom_button
 from Screen.ScanDir import scan_directory
+from Screen.Helper import lock_folder,unlock_folder
 def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath):
     scanned=set()
     if e.path:
         try:
-            quick_file_path = "storage/data/quickpath.txt"
+            quick_file_path = "files/quickpath.txt"
+            unlock_folder()
             os.makedirs(os.path.dirname(quick_file_path), exist_ok=True)
             try:
                 with open(quick_file_path, "a") as quick_file:
@@ -17,6 +19,8 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,r
                     scan_directory(file,quickfiles)
             except:
                 pass
+            finally:
+                lock_folder()
         except:
             pass
         if scanned:

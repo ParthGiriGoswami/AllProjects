@@ -1,4 +1,5 @@
 import flet as ft,re,os,pickle,asyncio
+from Screen.Helper import lock_folder,unlock_folder
 def passwordmanager(page: ft.Page):
     auto_close_task = None  
     def close_bs(e=None):
@@ -33,16 +34,21 @@ def passwordmanager(page: ft.Page):
         enable_disable_save_button()
         page.update()
     def load_data():
-        filepath = "storage/data/passwords.txt"
+        filepath = "files/passwords.txt"
         try:
+            unlock_folder()
             with open(filepath, "rb") as f:
                 return pickle.load(f)
         except (FileNotFoundError, pickle.UnpicklingError):
             return {}
+        finally:
+            lock_folder()
     def save_data(data):
-        os.makedirs("storage/data", exist_ok=True)
-        with open("storage/data/passwords.txt", "wb") as f:
+        os.makedirs("files", exist_ok=True)
+        lock_folder()
+        with open("files/passwords.txt", "wb") as f:
             pickle.dump(data, f)
+        unlock_folder()
     def save_password(e):
         site_key = site.value.strip()
         new_entry = {"username": username.value, "password": password.value}

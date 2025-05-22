@@ -1,12 +1,15 @@
 import flet as ft,os
 from Screen.Createbutton import create_custom_button
 from Screen.ListFiles import listfiles
+from Screen.Helper import lock_folder,unlock_folder
 from Screen.Verify import verify_yourself
 def SettingsView(page: ft.Page,quickpath,quickfile):
     exclusionpath=set()
-    if os.path.exists("storage/data/exclusion.txt"):
-        with open("storage/data/exclusion.txt", "r") as file:
+    if os.path.exists("files/exclusion.txt"):
+        unlock_folder()
+        with open("files/exclusion.txt", "r") as file:
             exclusionpath=set(line.strip() for line in file)
+        lock_folder()
     return ft.Container(
         expand=True,
         padding=10,

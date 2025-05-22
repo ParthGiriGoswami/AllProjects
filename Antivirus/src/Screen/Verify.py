@@ -1,4 +1,5 @@
 import sqlite3,flet as ft,os,hashlib,hmac
+from Screen.Helper import lock_folder,unlock_folder
 def hash_value(value: str, salt: bytes):
     return hashlib.pbkdf2_hmac('sha256', value.encode(), salt, 100000)
 def file_decryptor(e: ft.FilePickerResultEvent, page: ft.Page):
@@ -24,24 +25,26 @@ def file_encryptor(e: ft.FilePickerResultEvent, page: ft.Page):
 def verify_yourself(page: ft.Page, idx: str):
     from Screen.PasswordManager import passwordmanager
     from Screen.FolderLockerUnlocker import folder_locker, folder_unlocker
-    lock_folder = ft.FilePicker(on_result=lambda e: folder_locker(e, page))
-    unlock_folder = ft.FilePicker(on_result=lambda e: folder_unlocker(e, page))
+    lock = ft.FilePicker(on_result=lambda e: folder_locker(e, page))
+    unlock = ft.FilePicker(on_result=lambda e: folder_unlocker(e, page))
     file_encrypt = ft.FilePicker(on_result=lambda e: file_encryptor(e, page))
     file_decrypt = ft.FilePicker(on_result=lambda e: file_decryptor(e, page))
-    page.overlay.extend([lock_folder, unlock_folder, file_encrypt, file_decrypt])
+    page.overlay.extend([lock, unlock, file_encrypt, file_decrypt])
     def navigator():
         match idx:
             case "Password Manager": passwordmanager(page)
-            case "Lock Folder": lock_folder.get_directory_path()
-            case "Unlock Folder": unlock_folder.get_directory_path()
+            case "Lock Folder": lock.get_directory_path()
+            case "Unlock Folder": unlock.get_directory_path()
             case "File Encryption": file_encrypt.pick_files(allow_multiple=False)
             case "File Decryption": file_decrypt.pick_files(allow_multiple=False, allowed_extensions=["encrypted"])
     bs = ft.AlertDialog(modal=True, actions_alignment=ft.MainAxisAlignment.END)
     def fetch_config():
-        with sqlite3.connect("storage/data/config.enc") as conn:
+        unlock_folder()
+        with sqlite3.connect("files/config.enc") as conn:
             cursor = conn.cursor()
             cursor.execute('CREATE TABLE IF NOT EXISTS passwords (salt BLOB NOT NULL,password BLOB NOT NULL,question TEXT,answer BLOB)')
             cursor.execute('SELECT salt, password, question, answer FROM passwords LIMIT 1')
+            lock_folder()
             return cursor.fetchone()
     stored = fetch_config()
     def close_dialog():
@@ -58,7 +61,6 @@ def verify_yourself(page: ft.Page, idx: str):
             else:
                 answer_field.error_text = "Incorrect answer"
                 page.update()
-
         bs.title = ft.Text("Answer Security Question")
         bs.content = ft.Column([ft.Text(f"Security Question: {question_text}"),answer_field], height=70)
         bs.actions = [ft.TextButton("Submit", on_click=verify_answer),ft.TextButton("Cancel", on_click=lambda e: close_dialog())]
@@ -88,9 +90,11 @@ def verify_yourself(page: ft.Page, idx: str):
             if not valid:
                 page.update()
                 return
-            with sqlite3.connect("storage/data/config.enc") as conn:
+            unlock_folder()
+            with sqlite3.connect("files/config.enc") as conn:
                 conn.execute("UPDATE passwords SET password = ?", (hash_value(npin, salt),))
                 conn.commit()
+            lock_folder()
             close_dialog()
             navigator()
         bs.title = ft.Text("Reset PIN")
@@ -125,12 +129,14 @@ def verify_yourself(page: ft.Page, idx: str):
             salt = os.urandom(16)
             pin_hash = hash_value(pin, salt)
             answer_hash = hash_value(answer.lower(), salt)
-            with sqlite3.connect("storage/data/config.enc") as conn:
+            unlock_folder()
+            with sqlite3.connect("files/config.enc") as conn:
                 conn.execute(
                     "INSERT INTO passwords (salt, password, question, answer) VALUES (?, ?, ?, ?)",
                     (salt, pin_hash, question, answer_hash)
                 )
                 conn.commit()
+            lock_folder()
             close_dialog()
             navigator()
         bs.title = ft.Text("Set PIN & Security Question", size=18)
