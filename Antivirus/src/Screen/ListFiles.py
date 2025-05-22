@@ -14,15 +14,14 @@ def listfiles(page, idp, path=None, file=None):
     prev_button = ft.ElevatedButton("Previous")
     next_button = ft.ElevatedButton("Next")
     remove = ft.TextButton(f"Remove From {idp}", disabled=True)
-    select_all_button = ft.TextButton("Select All", visible=False)
-    icon = ft.Icon(ft.Icons.CLOSE, color=ft.Colors.RED, size=150) if idp == "Result" else None
+    select_all_button = ft.TextButton("Select All")
+    icon = ft.Icon(ft.Icons.CLOSE, color=ft.Colors.RED, size=200) if idp == "Result" else None
     files = ft.Text(f"{len(path)} files found", size=20) if idp == "Result" else None
     def update_remove_button_state():
         any_selected = any(selected_files_dict.values())
         remove.disabled = not any_selected
         add_button.disabled = not any_selected
         remove_button.disabled = not any_selected
-        select_all_button.visible = total_files[0] > 100
         page.update()
     def on_checkbox_change(e, file_path):
         selected_files_dict[file_path] = e.control.value
@@ -110,7 +109,6 @@ def listfiles(page, idp, path=None, file=None):
         all_checked = all(selected_files_dict.get(f, False) for f in all_files[0][start:end])
         for f in all_files[0][start:end]:
             selected_files_dict[f] = not all_checked
-
         file_list.controls.clear()
         for f in all_files[0][start:end]:
             file_list.controls.append(
