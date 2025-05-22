@@ -20,8 +20,8 @@ def analyze_pe_file(file_path):
         pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_SECURITY']])
         entropy = calculate_entropy(file_data)
         suspicious_sections = sum(1 for s in pe.sections if calculate_entropy(s.get_data()) > 7.0)
-        score = (2 if entropy > 9 else 0)+(3 if suspicious_sections > 2 else 0) +(2 if pe.OPTIONAL_HEADER.AddressOfEntryPoint < 0x1000 else 0)
-        return score >= 5
+        score = (2 if entropy > 7.5 else 0)+(3 if suspicious_sections > 2 else 0) +(2 if pe.OPTIONAL_HEADER.AddressOfEntryPoint < 0x1000 else 0)
+        return score >= 4
     except pefile.PEFormatError:
         return False
     except Exception:
@@ -30,14 +30,14 @@ def analyze_script_file(file_path):
     try:
         with open(file_path, "rb") as f:
             content = f.read(5000)  
-        return sum(bool(p.search(content)) for p in suspicious_patterns) >= 7
+        return sum(bool(p.search(content)) for p in suspicious_patterns) >= 3
     except Exception:
         return False
 def analyze_generic_file(file_path):
     try:
         with open(file_path, "rb") as f:
             file_data = f.read(4096)
-        return calculate_entropy(file_data) > 9
+        return calculate_entropy(file_data) > 7.5
     except Exception:
         return False
 def analyze_file(file_path):

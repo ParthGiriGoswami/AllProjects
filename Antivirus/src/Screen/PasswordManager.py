@@ -1,22 +1,50 @@
-import flet as ft,re,os,pickle,asyncio
+import flet as ft,re,os,pickle,sqlite3
 def passwordmanager(page: ft.Page):
-    auto_close_task = None  
-    def close_bs(e=None):
-        nonlocal auto_close_task
-        if auto_close_task and not auto_close_task.done():
-            auto_close_task.cancel()
+    def fetch_password():
+        with sqlite3.connect("storage/data/verify.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute('CREATE TABLE IF NOT EXISTS passwords(password TEXT NOT NULL)')
+            cursor.execute('SELECT * FROM passwords')
+            return cursor.fetchone()
+    stored_row = fetch_password()
+    def close_action(e):
+        page.close(alert)
+        page.update()
+    def verifypassword(e):
+        if len(cont.value) == 4:
+            current_input = cont.value
+            if stored_row:
+                if current_input == stored_row[0]:
+                    showpassword(page)
+                else:
+                    cont.error_text = "Invalid Password"
+                    page.update()
+            else:
+                with sqlite3.connect("storage/data/verify.db") as conn:
+                    cursor = conn.cursor()
+                    cursor.execute('INSERT INTO passwords (password) VALUES (?)', (current_input,))
+                    conn.commit()
+                showpassword(page)
+    cont = ft.TextField(
+        label="Password",password=True,can_reveal_password=True,keyboard_type=ft.KeyboardType.NUMBER,
+        input_filter=ft.InputFilter(allow=True, regex_string=r"^\d*$", replacement_string=""),
+        on_change=verifypassword,max_length=4
+    )
+    alert = ft.AlertDialog(
+        modal=True,
+        title=ft.Row([
+            ft.Text("Set Password" if not stored_row else "Enter 4 digit PIN", size=20, weight=ft.FontWeight.BOLD),
+            ft.Container(expand=True),
+            ft.IconButton(icon=ft.Icons.CLOSE, tooltip="Close", on_click=close_action),
+        ], alignment=ft.MainAxisAlignment.START),
+        content=cont,
+        actions_alignment=ft.CrossAxisAlignment.END,
+    )
+    page.open(alert)
+def showpassword(page: ft.Page):
+    def close_bs(e):
         bs.open = False
         page.update()
-    async def auto_close_dialog():
-        try:
-            await asyncio.sleep(300)  
-            bs.open = False
-            snack_bar = ft.SnackBar(ft.Text("Session expired",color=ft.Colors.WHITE),bgcolor="#272A2F")
-            page.open(snack_bar)
-            page.update()
-        except:
-            pass
-    auto_close_task = page.run_task(auto_close_dialog)
     def add_new_password(e):
         form.visible = not form.visible
         add_button.icon = ft.Icons.REMOVE if form.visible else ft.Icons.ADD
