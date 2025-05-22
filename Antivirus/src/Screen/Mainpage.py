@@ -91,7 +91,7 @@ def MainPage(page: ft.Page):
         alignment=ft.alignment.center
     )
     loading_indicator = ft.Container(
-        content=ft.Column([animated_image_container,ft.Text("Scanning Files. Please wait",size=20,weight=ft.FontWeight.BOLD)],
+        content=ft.Column([animated_image_container,ft.Text("Scanning Files. Please wait......",size=20,weight=ft.FontWeight.BOLD)],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER),
         alignment=ft.alignment.center,
