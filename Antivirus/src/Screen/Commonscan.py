@@ -2,6 +2,7 @@ import flet as ft,queue,concurrent.futures,threading,os
 from queue import Queue
 from Screen.HeuristicScan import analyze_file
 from Screen.ListFiles import listfiles
+from Screen.Helper import lock_folder,unlock_folder
 exclusion_list = set()
 def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, count, page, lock, processed_count, flag):
     batch_size = 100 if compiled_rule is None else 10 if count < 100 else 100 if count < 500 else 200 if count<1000 else 1500 if not flag else 500
@@ -10,7 +11,7 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
         while not file_queue.empty():
             try:
                 file_path = file_queue.get_nowait()
-                if file_path in exclusion_list or os.path.commonpath([file_path, os.getcwd()]) == os.getcwd():
+                if file_path in exclusion_list or any(file_path.startswith(safe) for safe in ["C:/Windows", "C:/Program Files", "C:/Program Files (x86)", os.getcwd().replace("\\", "/")]):
                     file_queue.task_done()
                     continue
                 with lock:
@@ -40,11 +41,13 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
                 pass
 def scan_drives(page: ft.Page, txt, info, count, files, progress_ring, malware_count,compiled_rule, bs, flag):
     global exclusion_list
-    if os.path.exists("storage/data/exclusion.txt"):
-        with open("storage/data/exclusion.txt", "r") as file:
+    unlock_folder()
+    if os.path.exists("files/exclusion.txt"):
+        with open("files/exclusion.txt", "r") as file:
             exclusion_list = set(line.strip() for line in file)
     else:
         exclusion_list = set()
+    lock_folder()
     file_queue = Queue()
     for file in files:
         file_queue.put(file)

@@ -1,5 +1,6 @@
 import flet as ft
 from Screen.ScanDir import scan_directory
+from Screen.Helper import lock_folder,unlock_folder
 def listfiles(page, idp, path=None, file=None):
     ITEMS_PER_PAGE = 500
     current_page = [0]
@@ -65,10 +66,12 @@ def listfiles(page, idp, path=None, file=None):
         nonlocal path
         selected = {f for f, v in selected_files_dict.items() if v}
         path -= selected
-        file_path = "storage/data/exclusion.txt" if idp == "Exclusion List" else "storage/data/quickpath.txt"
+        file_path = "files/exclusion.txt" if idp == "Exclusion List" else "files/quickpath.txt"
+        unlock_folder()
         with open(file_path, "w") as f:
             for line in path:
                 f.write(f"{line}\n")
+        lock_folder()
         if idp == "Quick List":
             file.clear()
             file.update(scan_directory(dir_path, set()) for dir_path in path)
@@ -82,9 +85,11 @@ def listfiles(page, idp, path=None, file=None):
         if e.files:
             for f in e.files:
                 path.add(f.path)
-        with open("storage/data/exclusion.txt", "w") as f:
+        unlock_folder()
+        with open("files/exclusion.txt", "w") as f:
             for line in path:
                 f.write(f"{line}\n")
+        lock_folder()
         all_files[0] = sorted(path)
         selected_files_dict.clear()
         for f in all_files[0]:
@@ -93,9 +98,11 @@ def listfiles(page, idp, path=None, file=None):
     def add_folder_result(e):
         if e.path:
             path.add(e.path)
-            with open("storage/data/quickpath.txt", "w") as f:
+            unlock_folder()
+            with open("files/quickpath.txt", "w") as f:
                 for line in path:
                     f.write(f"{line}\n")
+            lock_folder()
             file.clear()
             file.update(scan_directory(dir_path, set()) for dir_path in path)
             all_files[0] = sorted(path)

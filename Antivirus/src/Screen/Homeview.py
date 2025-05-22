@@ -1,21 +1,25 @@
 import flet as ft,os
 from Screen.scan import Scan
 from Screen.ScanDir import scan_directory
+from Screen.Helper import lock_folder,unlock_folder
 scanned=set()
 def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath):
     if e.path:
         try:
-            quick_file_path = "storage/data/quickpath.txt"
+            quick_file_path = "files/quickpath.txt"
             os.makedirs(os.path.dirname(quick_file_path), exist_ok=True)
             try:
+                unlock_folder()
                 with open(quick_file_path, "a") as quick_file:
                     quick_file.write(f"{e.path}\n")
                     quickpath.add(e.path)
                     scanned.add(e.path)
-                for file in scanned:
-                    scan_directory(file,quickfiles)
+                    for file in scanned:
+                        scan_directory(file,quickfiles)
             except:
                 pass
+            finally:
+                lock_folder()
         except:
             pass
         if scanned:
