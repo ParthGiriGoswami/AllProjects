@@ -10,7 +10,7 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
         while not file_queue.empty():
             try:
                 file_path = file_queue.get_nowait()
-                if file_path in exclusion_list or file_path.endswith(os.path.join("src", "Screen", "Mainpage.py")):
+                if file_path in exclusion_list or os.path.commonpath([file_path, os.getcwd()]) == os.getcwd():
                     file_queue.task_done()
                     continue
                 with lock:
@@ -38,7 +38,7 @@ def worker(file_queue, malware_count, compiled_rule, txt, info, progress_ring, c
                 break
             except:
                 pass
-def scan_drives(page: ft.Page, txt, info, count, files, progress_ring, malware_count, compiled_rule, bs, flag):
+def scan_drives(page: ft.Page, txt, info, count, files, progress_ring, malware_count,compiled_rule, bs, flag):
     global exclusion_list
     if os.path.exists("storage/data/exclusion.txt"):
         with open("storage/data/exclusion.txt", "r") as file:
