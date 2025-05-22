@@ -85,8 +85,13 @@ def MainPage(page: ft.Page):
         transition=ft.AnimatedSwitcherTransition.SCALE,
         duration=500
     )
+    animated_image_container = ft.Container(
+        content=animated_image,
+        height=image_width,
+        alignment=ft.alignment.center
+    )
     loading_indicator = ft.Container(
-        content=ft.Column([animated_image],
+        content=ft.Column([animated_image_container,ft.Text("Scanning Files. Please wait",size=20,weight=ft.FontWeight.BOLD)],
         alignment=ft.MainAxisAlignment.CENTER,
         horizontal_alignment=ft.CrossAxisAlignment.CENTER),
         alignment=ft.alignment.center,
