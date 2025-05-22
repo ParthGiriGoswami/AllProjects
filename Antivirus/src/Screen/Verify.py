@@ -26,7 +26,7 @@ def file_decryptor(e: ft.FilePickerResultEvent, page: ft.Page):
 def file_encryptor(e: ft.FilePickerResultEvent, page: ft.Page):
     if e.files and len(e.files) > 0:
         file_encryption(page, e.files[0].path)
-def navigator(page,idx):
+def verify_yourself(page: ft.Page, idx):
     lock_folder = ft.FilePicker(on_result=lambda e: folder_locker(e, page))
     page.overlay.append(lock_folder)
     unlock_folder = ft.FilePicker(on_result=lambda e: folder_unlocker(e, page))
@@ -35,17 +35,17 @@ def navigator(page,idx):
     page.overlay.append(file_encrypt)
     file_decrypt = ft.FilePicker(on_result=lambda e: file_decryptor(e, page))
     page.overlay.append(file_decrypt)
-    if idx == "Password Manager":
-        passwordmanager(page)
-    elif idx == "Lock Folder":
-        lock_folder.get_directory_path()
-    elif idx == "Unlock Folder":
-        unlock_folder.get_directory_path()
-    elif idx == "File Encryption":
-        file_encrypt.pick_files(allow_multiple=False)
-    elif idx == "File Decryption":
-        file_decrypt.pick_files(allow_multiple=False, allowed_extensions=["encrypted"])
-def verify_yourself(page: ft.Page, idx):
+    def navigator(page,idx):
+        if idx == "Password Manager":
+            passwordmanager(page)
+        elif idx == "Lock Folder":
+            lock_folder.get_directory_path()
+        elif idx == "Unlock Folder":
+            unlock_folder.get_directory_path()
+        elif idx == "File Encryption":
+            file_encrypt.pick_files(allow_multiple=False)
+        elif idx == "File Decryption":
+            file_decrypt.pick_files(allow_multiple=False, allowed_extensions=["encrypted"])
     def fetch_password():
         with sqlite3.connect("storage/data/config.enc") as conn:
             cursor = conn.cursor()
