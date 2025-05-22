@@ -1,18 +1,9 @@
 import flet as ft,os
 from Screen.scan import Scan
 from Screen.Createbutton import create_custom_button
-scanned=set()
-def scan_directory(directory, file_set):
-    try:
-        with os.scandir(directory) as entries:
-            for entry in entries:
-                if entry.is_file():
-                    file_set.add(entry.path)
-                elif entry.is_dir(follow_symlinks=False):
-                    scan_directory(entry.path, file_set)
-    except (PermissionError, FileNotFoundError):
-        pass
+from Screen.ScanDir import scan_directory
 def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath):
+    scanned=set()
     if e.path:
         try:
             quick_file_path = "storage/data/quickpath.txt"
@@ -31,13 +22,10 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,r
         if scanned:
             Scan(page,quickfiles,rule,False)
 def on_folder_picked_for_custom_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule):
-    global scanned
+    scanned=set()
     if e.path:
         try:
-            with os.scandir(e.path) as entries:
-                for entry in entries:
-                    if entry.is_file():
-                        scanned.add(entry.path)
+           scan_directory(e.path,scanned)
         except (PermissionError, FileNotFoundError):
             pass
         if scanned:

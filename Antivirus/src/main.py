@@ -4,14 +4,10 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
     page.theme = ft.Theme(
         color_scheme=ft.ColorScheme(
-            primary=ft.Colors.BLUE_200,
-            secondary=ft.Colors.BLUE_GREY,
-            surface=ft.Colors.BLACK,
-            background="#121212",
-            on_surface=ft.Colors.WHITE,
-            on_primary=ft.Colors.WHITE,
-        )
-    )
+            primary=ft.Colors.BLUE_200,secondary=ft.Colors.BLUE_GREY,
+            surface=ft.Colors.BLACK,background="#121212",
+            on_surface=ft.Colors.WHITE,on_primary=ft.Colors.WHITE,
+        ))
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     def resource_path(relative_path):
