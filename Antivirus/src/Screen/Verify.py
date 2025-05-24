@@ -9,14 +9,14 @@ def file_decryptor(e: ft.FilePickerResultEvent, page: ft.Page):
             from Screen.FileEncryptionDecryption import file_decryption
             file_decryption(page, file)
         else:
-            page.dialog = ft.AlertDialog(
+            bs = ft.AlertDialog(
                 modal=True,
                 title=ft.Text("Info"),
                 content=ft.Text("First encrypt the file"),
                 actions=[ft.TextButton("Ok", on_click=lambda e: page.dialog.open(False))],
                 actions_alignment=ft.MainAxisAlignment.END
             )
-            page.dialog.open(True)
+            page.open(bs)
             page.update()
 def file_encryptor(e: ft.FilePickerResultEvent, page: ft.Page):
     if e.files and len(e.files) > 0:
@@ -37,16 +37,16 @@ def verify_yourself(page: ft.Page, idx: str):
             case "Unlock Folder": unlock.get_directory_path()
             case "File Encryption": file_encrypt.pick_files(allow_multiple=False)
             case "File Decryption": file_decrypt.pick_files(allow_multiple=False, allowed_extensions=["encrypted"])
-    bs = ft.AlertDialog(modal=True, actions_alignment=ft.MainAxisAlignment.END)
+    bs = ft.AlertDialog(modal=True,actions_alignment=ft.MainAxisAlignment.END)
     def fetch_config():
-        unlock_folder()
         with sqlite3.connect("files/config.enc") as conn:
             cursor = conn.cursor()
             cursor.execute('CREATE TABLE IF NOT EXISTS passwords (salt BLOB NOT NULL,password BLOB NOT NULL,question TEXT,answer BLOB)')
             cursor.execute('SELECT salt, password, question, answer FROM passwords LIMIT 1')
-            lock_folder()
             return cursor.fetchone()
+    unlock_folder()
     stored = fetch_config()
+    lock_folder()
     def close_dialog():
         page.close(bs)
         page.update()
@@ -61,9 +61,15 @@ def verify_yourself(page: ft.Page, idx: str):
             else:
                 answer_field.error_text = "Incorrect answer"
                 page.update()
-        bs.title = ft.Text("Answer Security Question")
-        bs.content = ft.Column([ft.Text(f"Security Question: {question_text}"),answer_field], height=70)
-        bs.actions = [ft.TextButton("Submit", on_click=verify_answer),ft.TextButton("Cancel", on_click=lambda e: close_dialog())]
+        bs.title=ft.Text("Answer Security Question")
+        bs.content=ft.Column([
+                ft.Text(f"Security Question: {question_text}"),
+                answer_field
+            ], height=70)
+        bs.actions=[
+                ft.TextButton("Submit", on_click=verify_answer),
+                ft.TextButton("Cancel", on_click=lambda e: close_dialog())
+            ]
         page.open(bs)
         page.update()
     def show_reset_pin_dialog(salt):
@@ -81,6 +87,7 @@ def verify_yourself(page: ft.Page, idx: str):
                 valid = False
             else:
                 new_pin.error_text = None
+
             if npin != cpin:
                 confirm_pin.error_text = "PINs do not match"
                 valid = False
@@ -97,12 +104,9 @@ def verify_yourself(page: ft.Page, idx: str):
             lock_folder()
             close_dialog()
             navigator()
-        bs.title = ft.Text("Reset PIN")
-        bs.content = ft.Column([new_pin, confirm_pin], tight=True)
-        bs.actions = [
-            ft.TextButton("Submit", on_click=reset_pin),
-            ft.TextButton("Cancel", on_click=lambda e: close_dialog())
-        ]
+        bs.title=ft.Text("Reset PIN")
+        bs.content=ft.Column([new_pin, confirm_pin], tight=True)
+        bs.actions=[ft.TextButton("Submit", on_click=reset_pin),ft.TextButton("Cancel", on_click=lambda e: close_dialog())]
         page.open(bs)
         page.update()
     def show_initial_setup_dialog():
@@ -112,7 +116,7 @@ def verify_yourself(page: ft.Page, idx: str):
         question_field = ft.TextField(label="Security Question")
         answer_field = ft.TextField(label="Answer", password=True, can_reveal_password=True)
         def set_initial_password(e):
-            pin,question,answer=pin_field.value.strip(),question_field.value.strip(),answer_field.value.strip()            
+            pin, question, answer = pin_field.value.strip(), question_field.value.strip(), answer_field.value.strip()
             valid = True
             if len(pin) != 4 or not pin.isdigit():
                 pin_field.error_text = "PIN must be 4 digits"
@@ -139,12 +143,9 @@ def verify_yourself(page: ft.Page, idx: str):
             lock_folder()
             close_dialog()
             navigator()
-        bs.title = ft.Text("Set PIN & Security Question", size=18)
-        bs.content = ft.Column([pin_field, question_field, answer_field], tight=True)
-        bs.actions = [
-            ft.TextButton("Submit", on_click=set_initial_password),
-            ft.TextButton("Cancel", on_click=lambda e: close_dialog())
-        ]
+        bs.title=ft.Text("Set PIN & Security Question", size=18)
+        bs.content=ft.Column([pin_field, question_field, answer_field], tight=True)
+        bs.actions=[ft.TextButton("Submit", on_click=set_initial_password),ft.TextButton("Cancel", on_click=lambda e: close_dialog())]
         page.open(bs)
         page.update()
     def show_login_dialog():
@@ -162,15 +163,13 @@ def verify_yourself(page: ft.Page, idx: str):
                     pin_input.error_text = "Invalid PIN"
                     page.update()
         pin_input.on_change = validate_pin
-        bs.title = ft.Row([
+        bs.title=ft.Row([
             ft.Text("Enter PIN", size=20),
             ft.Container(expand=True),
             ft.IconButton(icon=ft.Icons.CLOSE, on_click=lambda e: close_dialog())
         ])
-        bs.content = pin_input
-        bs.actions = [
-            ft.TextButton("Forgot Password?", on_click=lambda e: show_question_dialog())
-        ]
+        bs.content=pin_input
+        bs.actions=[ft.TextButton("Forgot Password?", on_click=lambda e: show_question_dialog())]
         page.open(bs)
         page.update()
     if not stored:

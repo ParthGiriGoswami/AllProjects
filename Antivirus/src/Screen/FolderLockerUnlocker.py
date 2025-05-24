@@ -3,7 +3,7 @@ os.environ["FLET_LOG_LEVEL"] = "none"
 def folder_unlocker(e: ft.FilePickerResultEvent, page: ft.Page):
     def handle_close(e):
         page.close(dia)
-    if e.path!=os.path.abspath("files"):
+    if e.path:
         system = platform.system()
         if system == "Windows":
             command = f'icacls "{e.path}" /remove:d everyone'
@@ -22,18 +22,6 @@ def folder_unlocker(e: ft.FilePickerResultEvent, page: ft.Page):
             cont = ft.Text("Can't unlock the folder")
         dia = ft.AlertDialog(
             content=cont,
-            modal=True,
-            title=ft.Text("Info"),
-            actions=[
-                ft.TextButton("Ok", on_click=handle_close),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-            on_dismiss=lambda e: page.add(ft.Text("Modal dialog dismissed")),
-        )
-        page.open(dia)
-    else:
-        dia = ft.AlertDialog(
-            content=ft.Text("You can't unlock this folder"),
             modal=True,
             title=ft.Text("Info"),
             actions=[

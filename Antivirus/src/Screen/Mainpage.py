@@ -6,21 +6,18 @@ from Screen.Homeview import HomeView
 from Screen.Notifier import list_connected_devices, DownloadHandler
 from Screen.ScanDir import scan_directory
 from watchdog.observers import Observer
-from concurrent.futures import ThreadPoolExecutor
 from Screen.Helper import lock_folder,unlock_folder
+from concurrent.futures import ThreadPoolExecutor
 file_lock = threading.Lock()
 quickpath = set()
 deepfiles = set()
 quickfiles = set()
-SAFE_PATHS = [os.path.abspath(p).replace("\\", "/") for p in ["C:/Windows", "C:/Program Files", "C:/Program Files (x86)", os.getcwd().replace("\\", "/")]]
-def is_in_safe_path(file_path):
-    file_path = os.path.abspath(file_path)
-    return any(file_path.startswith(safe) for safe in SAFE_PATHS)
+exclusionfiles=set()
 def get_drives(file):
     partitions = psutil.disk_partitions()
     drive_letters = [p.device for p in partitions if p.fstype]
     def scan_drive(drive):
-        local_files = scan_directory(drive, set())
+        local_files = scan_directory(drive,set())
         with file_lock:
             file.update(local_files)
         return len(local_files)
@@ -129,23 +126,23 @@ def MainPage(page: ft.Page):
         if navigation_rail.disabled:
             return
         if index == 0:
-            view = HomeView(page, compiled_rule, quickfiles, quickpath)
+            view = HomeView(page,compiled_rule,quickfiles,quickpath,exclusionfiles)
         elif index == 1:
-            view = ScanView(page, compiled_rule, quickfiles, quickpath, deepfiles)
+            view = ScanView(page, compiled_rule, quickfiles, quickpath, deepfiles,exclusionfiles)
         elif index == 2:
             view = ProtectionView(page)
         else:
-            view = SettingsView(page, quickpath, quickfiles)
+            view = SettingsView(page, quickpath, quickfiles,exclusionfiles)
         content_container.content = view
         page.update()
     def update_ui_after_scan():
         nonlocal animation_running
         navigation_rail.disabled = False
-        content_container.content = HomeView(page, compiled_rule, quickfiles, quickpath)
+        content_container.content = HomeView(page,compiled_rule,quickfiles,quickpath,exclusionfiles)
         animation_running=False
         page.update()
     def init_scans():
-        global quickfiles
+        global quickfiles,exclusionfiles
         quickfiles.clear()
         get_drives(deepfiles)
         quick_scan_path = "files/quickpath.txt"
@@ -156,6 +153,9 @@ def MainPage(page: ft.Page):
                     path = line.strip()
                     quickpath.add(path)
                     scan_directory(path, quickfiles)
+        if os.path.exists("files/exclusion.txt"):
+            with open("files/exclusion.txt", "r") as file:
+                exclusionfiles=set(line.strip() for line in file)
         lock_folder()
         update_ui_after_scan()
     threading.Thread(target=init_scans, daemon=True).start()

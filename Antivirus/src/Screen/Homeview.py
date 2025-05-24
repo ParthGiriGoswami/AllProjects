@@ -3,7 +3,7 @@ from Screen.scan import Scan
 from Screen.ScanDir import scan_directory
 from Screen.Helper import lock_folder,unlock_folder
 scanned=set()
-def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath):
+def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,rule,quickfiles,quickpath,exclusionfiles):
     if e.path:
         try:
             quick_file_path = "files/quickpath.txt"
@@ -14,8 +14,8 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,r
                     quick_file.write(f"{e.path}\n")
                     quickpath.add(e.path)
                     scanned.add(e.path)
-                    for file in scanned:
-                        scan_directory(file,quickfiles)
+                for file in scanned:
+                    scan_directory(file,quickfiles)
             except:
                 pass
             finally:
@@ -23,13 +23,13 @@ def on_folder_picked_for_quick_scan(e: ft.FilePickerResultEvent, page: ft.Page,r
         except:
             pass
         if scanned:
-            Scan(page,quickfiles,rule,False)
-def HomeView(page: ft.Page,rule,quickfiles,quickpath):
-    file_picker_for_quick_scan = ft.FilePicker(on_result=lambda e: on_folder_picked_for_quick_scan(e, page,rule,quickfiles,quickpath))
+            Scan(page,quickfiles,exclusionfiles,rule,False)
+def HomeView(page: ft.Page,rule,quickfiles,quickpath,exclusionfiles):
+    file_picker_for_quick_scan = ft.FilePicker(on_result=lambda e: on_folder_picked_for_quick_scan(e, page,rule,quickfiles,quickpath,exclusionfiles))
     page.overlay.append(file_picker_for_quick_scan)
     btn1 = ft.ElevatedButton(
         "Quick scan",
-        on_click=lambda _:file_picker_for_quick_scan.get_directory_path() if not quickfiles else Scan(page,quickfiles,rule,False)
+        on_click=lambda _:file_picker_for_quick_scan.get_directory_path() if not quickfiles else Scan(page,quickfiles,exclusionfiles,rule,False)
     )
     return ft.Container(
         expand=True,

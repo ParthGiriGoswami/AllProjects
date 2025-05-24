@@ -1,7 +1,7 @@
 import flet as ft,threading,math
 from Screen.Commonscan import scan_drives
 malware_count = set()
-def Scan(page: ft.Page, scanned, rule, flag):
+def Scan(page: ft.Page, scanned,exclusionfiles,rule,flag):
     count = len(scanned)
     malware_count.clear()
     txt = ft.Text(value="", width=600, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, text_align=ft.TextAlign.CENTER)
@@ -44,6 +44,6 @@ def Scan(page: ft.Page, scanned, rule, flag):
     page.update()
     threading.Thread(
         target=scan_drives,
-        args=(page, txt, info, count, scanned, progress, malware_count, rule, bs, flag),
+        args=(page,txt,info,count,scanned,progress,malware_count,rule,bs,flag,exclusionfiles),
         daemon=True
     ).start()

@@ -44,11 +44,11 @@ def passwordmanager(page: ft.Page):
         finally:
             lock_folder()
     def save_data(data):
+        unlock_folder()
         os.makedirs("files", exist_ok=True)
-        lock_folder()
         with open("files/passwords.txt", "wb") as f:
             pickle.dump(data, f)
-        unlock_folder()
+        lock_folder()
     def save_password(e):
         site_key = site.value.strip()
         new_entry = {"username": username.value, "password": password.value}

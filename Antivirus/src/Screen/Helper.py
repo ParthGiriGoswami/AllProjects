@@ -1,9 +1,5 @@
-import os
-import subprocess
-import platform
-import stat
-from pathlib import Path
-path = Path("files").resolve().as_posix()
+import os,subprocess,platform,stat
+path ="files"
 def lock_folder():
     system = platform.system()
     if system == "Windows":
