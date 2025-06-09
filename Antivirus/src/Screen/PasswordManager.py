@@ -1,7 +1,28 @@
-import flet as ft,re,os,pickle,asyncio
-from Screen.Helper import lock_folder,unlock_folder
-def passwordmanager(page: ft.Page):
-    auto_close_task = None  
+import flet as ft
+import re, os, pickle, asyncio
+from cryptography.fernet import Fernet
+from Screen.Helper import lock_folder, unlock_folder
+def load_or_create_key(VAULT_DIR):
+    unlock_folder()
+    os.makedirs("{VAULT_DIR}", exist_ok=True)
+    key_path =f"{VAULT_DIR}/.datastore.bin"
+    if not os.path.exists(key_path):
+        key = Fernet.generate_key()
+        with open(key_path, "wb") as f:
+            f.write(key)
+    else:
+        with open(key_path, "rb") as f:
+            key = f.read()
+    lock_folder()
+    return key
+def encrypt(data,VAULT_DIR):
+    fernet = Fernet(load_or_create_key(VAULT_DIR))
+    return fernet.encrypt(data.encode()).decode()
+def decrypt(token,VAULT_DIR):
+    fernet = Fernet(load_or_create_key(VAULT_DIR))
+    return fernet.decrypt(token.encode()).decode()
+def passwordmanager(page: ft.Page,VAULT_DIR):
+    auto_close_task = None
     def close_bs(e=None):
         nonlocal auto_close_task
         if auto_close_task and not auto_close_task.done():
@@ -10,10 +31,10 @@ def passwordmanager(page: ft.Page):
         page.update()
     async def auto_close_dialog():
         try:
-            await asyncio.sleep(300)  
+            await asyncio.sleep(300)
             bs.open = False
-            snack_bar = ft.SnackBar(ft.Text("Session expired",color=ft.Colors.WHITE),bgcolor="#272A2F")
-            page.open(snack_bar)
+            page.snack_bar = ft.SnackBar(ft.Text("Session expired", color=ft.Colors.WHITE), bgcolor="#272A2F")
+            page.snack_bar.open = True
             page.update()
         except:
             pass
@@ -34,7 +55,7 @@ def passwordmanager(page: ft.Page):
         enable_disable_save_button()
         page.update()
     def load_data():
-        filepath = "files/passwords.txt"
+        filepath =f"{VAULT_DIR}/passwords.txt"
         try:
             unlock_folder()
             with open(filepath, "rb") as f:
@@ -45,13 +66,16 @@ def passwordmanager(page: ft.Page):
             lock_folder()
     def save_data(data):
         unlock_folder()
-        os.makedirs("files", exist_ok=True)
-        with open("files/passwords.txt", "wb") as f:
+        os.makedirs(f"{VAULT_DIR}", exist_ok=True)
+        with open(f"{VAULT_DIR}/passwords.txt", "wb") as f:
             pickle.dump(data, f)
         lock_folder()
     def save_password(e):
         site_key = site.value.strip()
-        new_entry = {"username": username.value, "password": password.value}
+        new_entry = {
+            "username": encrypt(username.value,VAULT_DIR),
+            "password": encrypt(password.value,VAULT_DIR)
+        }
         all_data = load_data()
         all_data.setdefault(site_key, []).append(new_entry)
         save_data(all_data)
@@ -65,8 +89,13 @@ def passwordmanager(page: ft.Page):
         )
     def load_passwords_view():
         def create_credential_row(entry, site_name, entry_index):
-            original_username = entry["username"]
-            original_password = entry["password"]
+            try:
+                original_username = decrypt(entry["username"],VAULT_DIR)
+                original_password = decrypt(entry["password"],VAULT_DIR)
+            except Exception:
+                original_username = "<decryption error>"
+                original_password = "<decryption error>"
+
             user = ft.TextField(
                 label="Username",
                 value=original_username,
@@ -101,8 +130,8 @@ def passwordmanager(page: ft.Page):
                 all_data = load_data()
                 if site_name in all_data and len(all_data[site_name]) > entry_index:
                     all_data[site_name][entry_index] = {
-                        "username": user.value,
-                        "password": passw.value
+                        "username": encrypt(user.value,VAULT_DIR),
+                        "password": encrypt(passw.value,VAULT_DIR)
                     }
                     save_data(all_data)
                 toggle_edit(e)

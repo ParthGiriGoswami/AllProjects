@@ -1,103 +1,79 @@
+import os, platform, hashlib, flet as ft, ctypes
 from cryptography.fernet import Fernet
-import os,flet as ft
-def load_key(key_file):
-    with open(key_file, "rb") as file:
-        key = file.read()
-    return key
-def file_decryption(page: ft.Page,encrypted_file_path):
-    def handle_close(e):
-        page.close(dia)
-    if not os.path.exists(encrypted_file_path):
-        pass
-    base_name = encrypted_file_path.replace(".encrypted", "")
-    key_file = f"{base_name}.key"
-    key = load_key(key_file)
-    fernet = Fernet(key)
-    with open(encrypted_file_path, "rb") as file:
-        encrypted_data = file.read()  
-    decrypted_data = fernet.decrypt(encrypted_data)
-    original_file = base_name
-    with open(original_file, "wb") as file:
-        file.write(decrypted_data)  
-    dia = ft.AlertDialog(
-        modal=True,
-        title=ft.Text("Info"),
-        content=ft.Text("File Decrypted"),
-        actions=[
-            ft.TextButton("Ok", on_click=handle_close),
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-        on_dismiss=lambda e: page.add(
-            ft.Text("Modal dialog dismissed"),
-        ),
-    )
-    page.open(dia)
-    os.remove(encrypted_file_path)
-    os.remove(key_file)
-    return original_file
-def generate_key(file_name):
-    key_file = f"{file_name}.key"
-    key = Fernet.generate_key()
-    with open(key_file, "wb") as file:
-        file.write(key)
-    return key_file
+from Screen.Helper import lock_folder, unlock_folder
+IS_WINDOWS = platform.system() == "Windows"
+FILE_ATTRIBUTE_READONLY = 0x01
+FILE_ATTRIBUTE_NORMAL = 0x80
+def key_filename(file_path, vault_dir):
+    return os.path.join(vault_dir, f"{hashlib.sha256(file_path.encode()).hexdigest()}.bin")
+def generate_key(file_path, vault_dir):
+    key_path = key_filename(file_path, vault_dir)
+    unlock_folder()
+    with open(key_path, "wb") as f:
+        f.write(Fernet.generate_key())
+    if IS_WINDOWS:
+        ctypes.windll.kernel32.SetFileAttributesW(key_path, FILE_ATTRIBUTE_READONLY)
+    lock_folder()
+    return key_path
+def load_key(file_path, vault_dir):
+    key_path = key_filename(file_path, vault_dir)
+    if not os.path.exists(key_path):
+        raise FileNotFoundError(f"Key file not found for {file_path}")
+    with open(key_path, "rb") as f:
+        return f.read()
 def encrypt_file(file_path, key):
-    fernet = Fernet(key)
-    with open(file_path, "rb") as file:
-        file_data = file.read()  
-    encrypted_data = fernet.encrypt(file_data)  
-    encrypted_file = file_path + ".encrypted"
-    with open(encrypted_file, "wb") as file:
-        file.write(encrypted_data)
-    os.remove(file_path)  
-def file_encryption(page: ft.Page, file_path):
-    def handle_close(e):
-        page.close(dia)
-    key_file = f"{file_path}.key"
+    with open(file_path, "rb") as f:
+        encrypted_data = Fernet(key).encrypt(f.read())
+    with open(file_path + ".encrypted", "wb") as f:
+        f.write(encrypted_data)
+    os.remove(file_path)
+def file_encryption(page: ft.Page, file_path, vault_dir):
+    def show_dialog(title, message):
+        dialog= ft.AlertDialog(
+            modal=True,
+            title=ft.Text(title),
+            content=ft.Text(message),
+            actions=[ft.TextButton("OK", on_click=lambda e: page.close(dialog))],
+            actions_alignment=ft.MainAxisAlignment.END,
+        )
+        page.open(dialog)
     if file_path.endswith(".encrypted"):
-        dia = ft.AlertDialog(
+        show_dialog("Error", "This file is already encrypted.")
+    else:
+        try:
+            if not os.path.exists(key_filename(file_path, vault_dir)):
+                generate_key(file_path, vault_dir)
+            key = load_key(file_path, vault_dir)
+            encrypt_file(file_path, key)
+            show_dialog("Success", "File encrypted successfully.")
+        except:
+            pass
+def file_decryption(page: ft.Page, encrypted_path, vault_dir):
+    def show_dialog(title, message):
+        dialog = ft.AlertDialog(
             modal=True,
-            title=ft.Text("Info"),
-            content=ft.Text("You have already encrypted the file"),
-            actions=[
-                ft.TextButton("Ok", on_click=handle_close),
-            ],
+            title=ft.Text(title),
+            content=ft.Text(message),
+            actions=[ft.TextButton("OK", on_click=lambda e: page.close(dialog))],
             actions_alignment=ft.MainAxisAlignment.END,
-            on_dismiss=lambda e: page.add(
-                ft.Text("Modal dialog dismissed"),
-            ),
         )
-        page.open(dia)
+        page.open(dialog)
+    if not os.path.exists(encrypted_path):
+        show_dialog("Error", "Encrypted file not found.")
         return
-    if file_path.endswith(".key"):
-        dia = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Error"),
-            content=ft.Text("Key files cannot be encrypted."),
-            actions=[
-                ft.TextButton("Ok", on_click=handle_close),
-            ],
-            actions_alignment=ft.MainAxisAlignment.END,
-            on_dismiss=lambda e: page.add(
-                ft.Text("Modal dialog dismissed"),
-            ),
-        )
-        page.open(dia)
-        return
-    if not os.path.exists(key_file):
-        generate_key(file_path)
-    key = load_key(key_file)
-    encrypt_file(file_path, key)
-    dia = ft.AlertDialog(
-        modal=True,
-        title=ft.Text("Success"),
-        content=ft.Text("File encrypted successfully"),
-        actions=[
-            ft.TextButton("Ok", on_click=handle_close),
-        ],
-        actions_alignment=ft.MainAxisAlignment.END,
-        on_dismiss=lambda e: page.add(
-            ft.Text("Modal dialog dismissed"),
-        ),
-    )
-    page.open(dia)  
+    base_path = encrypted_path.replace(".encrypted", "")
+    try:
+        key = load_key(base_path, vault_dir)
+        with open(encrypted_path, "rb") as f:
+            decrypted_data = Fernet(key).decrypt(f.read())
+        with open(base_path, "wb") as f:
+            f.write(decrypted_data)
+        os.remove(encrypted_path)
+        key_path = key_filename(base_path, vault_dir)
+        if os.path.exists(key_path):
+            if IS_WINDOWS:
+                ctypes.windll.kernel32.SetFileAttributesW(key_path, FILE_ATTRIBUTE_NORMAL)
+            os.remove(key_path)
+        show_dialog("Info", "File decrypted successfully.")
+    except:
+        pass
