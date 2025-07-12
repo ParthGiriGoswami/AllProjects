@@ -9,12 +9,12 @@ conn.execute('''CREATE TABLE IF NOT EXISTS chat(email TEXT PRIMARY KEY, username
 cur=conn.cursor()
 if not firebase_admin._apps:
     cred = credentials.Certificate('cred.json')  
-    firebase_admin.initialize_app(cred, {'databaseURL': "https://yourdb.firebaseio.com/"})
+    firebase_admin.initialize_app(cred, {'databaseURL': "https://chatbot-15c4e-default-rtdb.firebaseio.com/"})
 users_ref = db.reference('users')
 def sendemail(email):
     s = smtplib.SMTP("smtp.gmail.com", 587)  
     s.starttls()
-    s.login("email","password")
+    s.login("s9174213@gmail.com", "ojwneohzsklvsmbl")
     otp = random.randint(1000, 9999)
     msg="Your otp is "+str(otp)
     s.sendmail("s9174213@gmail.com",email,msg)
